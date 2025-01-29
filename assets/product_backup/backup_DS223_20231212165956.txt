@@ -1,0 +1,1 @@
+{"item_code":"DS223","manufacturer":"synology","short_des":"DS223","long_des":"DS223","category":"NAS","image1":"..\/..\/..\/assets\/product_image\/657818d88faf6_patient1.png","image2":"..\/..\/..\/assets\/product_image\/657818d89039b_qngp_8kil_221017.jpg","brand":"Synology","price":"0","capacity":null}

@@ -1,0 +1,1 @@
+{"item_code":"DS224+","manufacturer":"synology","short_des":"DS224+","long_des":"DS224+","category":"NAS","image1":"..\/..\/..\/assets\/product_image\/65789b1277cc2_summary.png","image2":"..\/..\/..\/assets\/product_image\/65789b12781a5_patient1.png","brand":"Synology","price":"0","capacity":null}

@@ -1,0 +1,51 @@
+{
+  "name": "html-bootstrap-js-dashboard",
+  "version": "1",
+  "description": "dashboard",
+  "main": "dashboards/dashboard.php",
+  "directories": {
+    "example": "root"
+  },
+  "scripts": {
+    "open-app": "gulp open-app",
+    "start": "npm run open-app",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch": "gulp-watch"
+  },
+  "keywords": [
+    "material dashboard pro",
+    "bootstrap 5",
+    "dashboard",
+    "admin dashboard",
+    "creative tim",
+    "html dashboard",
+    "html css dashboard",
+    "web dashboard",
+    "premium",
+    "premium bootstrap admin dashboard",
+    "css3 kit",
+    "bootstrap dashboard",
+    "frontend",
+    "responsive bootstrap admin dashboard"
+  ],
+  "author": "M D L U Kavishka",
+  "license": "Premium",
+  "devDependencies": {
+    "gulp": "^4.0.2",
+    "gulp-autoprefixer": "^7.0.1",
+    "gulp-clean": "^0.4.0",
+    "gulp-install": "^1.1.0",
+    "gulp-open": "^3.0.1",
+    "gulp-sass": "^5.1.0",
+    "gulp-sourcemaps": "^2.6.5",
+    "sass": "^1.49.9",
+    "tailwindcss": "^3.4.13"
+  },
+  "dependencies": {
+    "bootstrap-icons": "^1.11.1",
+    "flatpickr": "^4.6.13",
+    "jspdf": "^2.5.1",
+    "mysql2": "^3.6.3",
+    "puppeteer": "^22.2.0"
+  }
+}

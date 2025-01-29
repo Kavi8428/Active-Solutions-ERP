@@ -1,0 +1,16 @@
+body {
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Blur effect */
+#myModal {
+  z-index: 9999;
+  /* Ensure modal is on top */
+}
+
+/* Blur effect for the background */
+.blur {
+  filter: blur(5px);
+  pointer-events: none;
+  /* Prevent interaction with blurred content */
+}

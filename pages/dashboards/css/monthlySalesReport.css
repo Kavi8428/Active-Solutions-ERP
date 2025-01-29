@@ -1,0 +1,218 @@
+.card {
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.filter-section {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 2px;
+    margin-bottom: 20px;
+}
+
+.scrollable-body {
+    display: block;
+    max-height: 400px;
+    /* Adjust height as needed */
+    overflow-y: auto;
+    /* Allows vertical scrolling */
+}
+
+.table th,
+.table td {
+    white-space: nowrap;
+    /* Prevents text wrapping */
+    font-size: smaller;
+}
+
+.table thead tr {
+    display: block;
+    /* Ensures headers stay in the same table layout */
+    table-layout: fixed;
+    /* Ensures the header and body have the same width */
+    width: 100%;
+    /* Ensures it spans the full width */
+}
+
+.table th,
+.table td {
+    padding: 2px 0px 5px 0px;
+    /* Add padding for better spacing */
+    vertical-align: middle;
+    /* Vertically center align text */
+}
+
+.table th {
+    background: #f8f9fa;
+    /* Keeps the header background */
+
+}
+
+/* Specific alignments based on content type */
+.table td {
+    text-align: start;
+    /* Default left alignment for text */
+    background: white;
+    border: 2px solid #dee2e6;
+}
+
+/* Right align numeric values */
+.table td:nth-child(5),
+/* Value column */
+.table td:nth-child(6),
+/* VAT column */
+.table td:nth-child(7),
+/* Other column */
+.table td:nth-child(8) {
+    /* Total column */
+    text-align: right;
+    /* Right align numeric values */
+
+}
+
+/* Set fixed widths for columns */
+.table th:nth-child(1),
+.table td:nth-child(1) {
+    width: 15%;
+    /* Date column */
+}
+
+.table th:nth-child(2),
+.table td:nth-child(2) {
+    width: 15%;
+    /* Invoice # column */
+}
+
+.table th:nth-child(3),
+.table td:nth-child(3) {
+    width: 25%;
+    /* Customer column */
+}
+
+.table th:nth-child(4),
+.table td:nth-child(4) {
+    width: 15%;
+    /* Category column */
+}
+
+.table th:nth-child(5),
+.table td:nth-child(5) {
+    width: 10%;
+    /* Value column */
+}
+
+.table th:nth-child(6),
+.table td:nth-child(6) {
+    width: 10%;
+    /* VAT column */
+}
+
+.table th:nth-child(7),
+.table td:nth-child(7) {
+    width: 10%;
+    /* Other column */
+}
+
+.table th:nth-child(8),
+.table td:nth-child(8) {
+    width: 10%;
+    /* Total column */
+}
+
+/* Optional: Add a border to the table for better visibility */
+.table {
+    border: 1px solid #dee2e6;
+    /* Optional: border around the table */
+    border-collapse: collapse;
+    /* Collapse borders for better appearance */
+}
+
+
+
+.sort-icon {
+    cursor: pointer;
+    margin-left: 5px;
+}
+
+.sort-icon:hover {
+    color: #0d6efd;
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    color: #6c757d;
+    font-weight: 500;
+    font-size: small;
+    transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link.active {
+    color: #0d6efd;
+    border-bottom: 2px solid #0d6efd;
+    background: transparent;
+}
+
+.stats-card {
+    transition: transform 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-icon {
+    font-size: 2rem;
+    color: #0d6efd;
+}
+
+label {
+    font-size: small;
+    margin-left: 1rem;
+}
+
+/* Style for all Handsontable headers */
+.handsontable .htCore th {
+    font-weight: bold;
+    background-color: #f2f2f2; /* Light gray background for header */
+}
+
+/* Style for all Handsontable total rows (footer) */
+.handsontable .ht_clone_bottom .htCore td {
+    font-weight: bold;
+    background-color: #e6e6e6; /* Light gray background for footer */
+}
+
+/* Set black color for the table body text */
+.handsontable .htCore td {
+    color: black;
+}
+.totals-row{
+    color: black;
+    font-weight: bold;
+
+
+}
+.footer-bold {
+    background-color: #e6f3ff !important;
+}
+.manager-row {
+    border-bottom: 1px solid #ccc; /* Default bottom border */
+}
+
+.manager-row:first-child {
+    border-bottom: 1px solid #ccc /* Stronger border for the first row */
+}
+
+.chart-container {
+    max-width: 720px;
+    margin: 2rem auto;
+}
+.center-text {
+    position: absolute;
+    top: 52%;
+    left: 50%;
+    color: white;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    font-weight: bold;
+}

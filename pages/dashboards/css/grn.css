@@ -1,0 +1,227 @@
+label {
+    font-size: smaller;
+}
+
+input {
+    font-size: smaller;
+    border: 1px solid black;
+    border-radius: 3px;
+}
+
+select {
+    font-size: smaller;
+    width: 80%;
+}
+
+#invTable {
+    font-size: smaller;
+    width: 100%;
+    border: 1px solid black;
+    border-color: black;
+}
+
+td {
+    border: 1px solid black;
+
+}
+
+.select2-container {
+    width: 100% !important;
+}
+
+#toast {
+    visibility: hidden;
+    min-width: 250px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 8px;
+    padding: 16px;
+    position: fixed;
+    z-index: 1;
+    left: 50%;
+    bottom: 30px;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.3s, visibility 0.3s, bottom 0.3s;
+}
+
+#toast.show {
+    visibility: visible;
+    opacity: 1;
+    bottom: 50px;
+}
+
+.select-container {
+    display: flex;
+    gap: 1px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.select-container .select2-container {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Remove default Select2 borders */
+.select-container .select2-container .select2-selection {
+    border: 1px solid black;
+    border-radius: 0;
+    font-size: small;
+}
+
+/* Remove focus outline since we have container border */
+.select-container .select2-container--focus .select2-selection {
+    box-shadow: none;
+    border: none;
+}
+
+/* Container focus state */
+.select-container:focus-within {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Add separator between selects */
+.select-container .select2-container:first-child .select2-selection {
+    border-right: 1px solid #dee2e6;
+}
+
+/* Match Bootstrap height */
+.select2-container .select2-selection--single {
+    height: 26px !important;
+}
+
+.select2-container .select2-selection--single .select2-selection__rendered {
+    line-height: 26px !important;
+}
+
+.select2-container .select2-selection--single .select2-selection__arrow {
+    height: 24px !important;
+}
+
+/* Match Bootstrap styling */
+.select2-container--default .select2-selection--single {
+    background-color: #fff;
+    border: 1px solid black;
+    font-size: small;
+}
+
+/* Dropdown styling */
+.select2-dropdown {
+    border-color: #dee2e6;
+}
+
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: #0d6efd;
+}
+
+.tagInput {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-height: 24px;
+    padding: 2px;
+    width: 100%;
+}
+
+.tag {
+    background: transparent;
+    border-radius: 3px;
+    padding: 2px 6px;
+    margin: 1px;
+    display: inline-flex;
+    align-items: center;
+    max-width: calc(100% - 4px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tag .remove {
+    margin-left: 4px;
+    cursor: pointer;
+    color: #666;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.tagInput input {
+    border: none;
+    outline: none;
+    padding: 2px;
+    margin: 1px;
+    width: 80px;
+    min-width: 80px;
+    max-width: 100%;
+}
+
+.handsontable td {
+    white-space: normal;
+    height: 32px;
+    min-height: 32px;
+}
+
+#example {
+    overflow: hidden;
+    margin: 20px;
+}
+
+.handsontable .htDimmed {
+    color: inherit !important;
+}
+
+.tagInput {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 5px;
+    background-color: transparent;
+    border:  none ;
+    border-radius: 4px;
+}
+
+.tag {
+    display: inline-block;
+    background-color: #007bff;
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.tag .remove {
+    margin-left: 5px;
+    cursor: pointer;
+    color: #fff;
+    font-weight: bold;
+}
+
+  /* HTML: <div class="loader"></div> */
+  .loader {
+    height: 15px;
+    aspect-ratio: 4;
+    --_g: no-repeat radial-gradient(farthest-side,#000 90%,#0000);
+    background: 
+      var(--_g) left, 
+      var(--_g) right;
+    background-size: 25% 100%;
+    display: flex;
+  }
+  .loader:before{
+    content: "";
+    flex: 1;
+    background: inherit;
+    animation: l50 2s infinite;
+  }
+  @keyframes l50 {
+    0%    {transform: translate( 37.5%) rotate(0)     }
+    16.67%{transform: translate( 37.5%) rotate(90deg) }
+    33.33%{transform: translate(-37.5%) rotate(90deg) }
+    50%   {transform: translate(-37.5%) rotate(180deg)}
+    66.67%{transform: translate(-37.5%) rotate(270deg)}
+    83.33%{transform: translate( 37.5%) rotate(270deg)}
+    100%  {transform: translate( 37.5%) rotate(360deg)}
+  }

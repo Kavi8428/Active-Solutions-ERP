@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Searchable Input with Dropdown</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <style>
+        #searchDropdown {
+            position: absolute;
+            z-index: 1000;
+            width: 100%;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5 position-relative">
+        <input type="text" id="searchInput" class="form-control" placeholder="Start typing to search...">
+        <div id="searchDropdown" class="bg-white border">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Category</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsTable">
+                    <!-- Search results will be appended here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script>
+        const data = [
+            { id: 1, name: 'Item 1', category: 'Category A' },
+            { id: 2, name: 'Item 2', category: 'Category B' },
+            { id: 3, name: 'Item 3', category: 'Category A' },
+            { id: 4, name: 'Item 4', category: 'Category C' },
+            { id: 5, name: 'Item 5', category: 'Category B' }
+        ];
+
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const searchValue = this.value.toLowerCase();
+            const filteredData = data.filter(item => item.name.toLowerCase().includes(searchValue) || item.category.toLowerCase().includes(searchValue));
+
+            const resultsTable = document.getElementById('resultsTable');
+            resultsTable.innerHTML = '';
+
+            if (searchValue) {
+                filteredData.forEach(item => {
+                    const row = `<tr>
+                                    <th scope="row">${item.id}</th>
+                                    <td>${item.name}</td>
+                                    <td>${item.category}</td>
+                                 </tr>`;
+                    resultsTable.insertAdjacentHTML('beforeend', row);
+                });
+
+                document.getElementById('searchDropdown').style.display = 'block';
+            } else {
+                document.getElementById('searchDropdown').style.display = 'none';
+            }
+        });
+
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('#searchInput')) {
+                document.getElementById('searchDropdown').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
