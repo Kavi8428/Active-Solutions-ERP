@@ -54,6 +54,7 @@ function mergeGinData () {
         : ['']
       return serials.map(sn => ({
         invNo: 'GIN000' + item.id,
+        status: item.status || 'GIN',
         customer: item.customer,
         salesRep: '',
         item: item.itemCode,
@@ -61,8 +62,8 @@ function mergeGinData () {
         value: '',
         createdAt: item.created_at,
         warrantyDate: '',
-        description:
-          'Object : ' + item.object + ', End-Customer : ' + item.end_customer
+        description: 'End-Customer : ' + item.end_customer,
+        object: item.object || ''
       }))
     })
     mainArray.push(...tempGinArray)
@@ -82,6 +83,7 @@ function mergeInvData () {
         : ['']
       return serials.map(sn => ({
         invNo: item.inv,
+        status: item.status || '',
         customer: item.customer,
         salesRep: item.rep,
         item: item.item_code,
@@ -89,7 +91,9 @@ function mergeInvData () {
         value: item.unit_price,
         createdAt: item.created_at,
         warrantyDate: item.warranty,
-        description: item.description
+        description: item.description,
+        object: item.object || ''
+
       }))
     })
     mainArray.push(...tempInvArray)
@@ -109,6 +113,7 @@ function mergeGrnData () {
         : ['']
       return serials.map(sn => ({
         invNo: 'GRN000' + item.id,
+        status: item.status || 'GRN',
         customer: item.supplier,
         salesRep: '',
         item: item.itemCode,
@@ -116,8 +121,8 @@ function mergeGrnData () {
         value: '',
         createdAt: item.created_at,
         warrantyDate: '',
-        description:
-          'Object  :  ' + item.object + ', ' + 'Method  :  ' + item.method
+        description:'Shipping Method  :  ' + item.method,
+        object: item.object || ''
       }))
     })
     mainArray.push(...tempGrnArray)
@@ -145,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function () {
       // Calculate dynamic width and height
       const tableHeight = window.innerHeight * 0.8 // 80% of screen height
       const tableWidth = window.innerWidth * 0.9 // 90% of screen width
-      const columnWidths = [80, 150, 120, 100, 130, 80, 150, 150, 200] // Adjust widths as needed
+      const columnWidths = [80,80, 150, 120, 100, 130, 80, 150, 150, 200,80] // Adjust widths as needed
       let lastClickTime = 0
       let lastClickCell = null
 
@@ -156,6 +161,7 @@ document.addEventListener('DOMContentLoaded', function () {
         stretchH: 'all', // Stretch columns to fit width
         colHeaders: [
           'Invoice No',
+          'Status',
           'Customer',
           'Sales Rep',
           'Item',
@@ -163,10 +169,14 @@ document.addEventListener('DOMContentLoaded', function () {
           'Value',
           'Created At',
           'Warranty Date',
-          'Description'
+          'Description',
+          'Object'
+          
+
         ], // Define column headers
         columns: [
           { data: 'invNo', type: 'text', readOnly: true },
+          { data: 'status', type: 'text', readOnly: true },
           { data: 'customer', type: 'text', readOnly: true },
           { data: 'salesRep', type: 'text', readOnly: true },
           { data: 'item', type: 'text', readOnly: true },
@@ -189,7 +199,9 @@ document.addEventListener('DOMContentLoaded', function () {
             dateFormat: 'YYYY-MM-DD',
             readOnly: true
           },
-          { data: 'description', type: 'text', readOnly: true }
+          { data: 'description', type: 'text', readOnly: true },
+          { data: 'object', type: 'text', readOnly: true }
+
         ], // Bind data fields to columns
         colWidths: columnWidths, // Apply fixed column widths
         width: '100%', // Set width to 100% of container
@@ -239,6 +251,29 @@ document.addEventListener('DOMContentLoaded', function () {
           // Update the last click information
           lastClickTime = currentTime
           lastClickCell = { row: coords.row, col: coords.col }
+        },
+          cells: function (row, col) {
+          const cellProperties = {}
+          const data = this.instance.getDataAtRow(row)
+          if (col === 10) { // Assuming 'object' column is at index 10
+        if (data[10] === 'sale') {
+          cellProperties.renderer = function (instance, td) {
+            td.style.backgroundColor = 'red'
+            Handsontable.renderers.TextRenderer.apply(this, arguments)
+          }
+        } else if (data[10] === 'newStock') {
+          cellProperties.renderer = function (instance, td) {
+            td.style.backgroundColor = 'green'
+            Handsontable.renderers.TextRenderer.apply(this, arguments)
+          }
+        } else {
+          cellProperties.renderer = function (instance, td) {
+            td.style.backgroundColor = 'yellow'
+            Handsontable.renderers.TextRenderer.apply(this, arguments)
+          }
+        }
+          }
+          return cellProperties
         }
       })
 

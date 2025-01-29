@@ -34,7 +34,7 @@
                         </a>
                     </li>
                     <li class="breadcrumb-item">
-                        <a href="../../dashboard.php" class="text-dark">Dashboard</a>
+                        <a href="../../dashboard.php" class="text-dark ">Dashboard</a>
                     </li>
                     <li class="breadcrumb-item">
                         <a href="#" class="text-dark">Inventory</a>
@@ -77,7 +77,7 @@
 
         <!-- Serial Numbers Modal -->
         <div class="modal fade custom-modal" id="serialNumbersModal" tabindex="-1">
-            <div class="modal-dialog modal-lg">
+            <div class="modal-dialog modal-md">
                 <div class="modal-content">
                     <div class="modal-header bg-info text-white">
                         <h5 class="modal-title">Serial Numbers for <span id="currentItemCode"></span></h5>
