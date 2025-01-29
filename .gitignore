@@ -18,7 +18,6 @@ pushNotification.php
 # Lock files (optional)
 package-lock.json
 
-
+medical_centre/
 globaltec/
 
-medical_centre/
