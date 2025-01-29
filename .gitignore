@@ -1,0 +1,24 @@
+# Node.js dependencies
+node_modules/
+
+# PHP dependencies
+vendor/
+composer.lock
+
+# Editor & OS files
+.vscode/
+*.log
+
+# Environment files
+.env
+connection.php
+log.php
+pushNotification.php
+
+# Lock files (optional)
+package-lock.json
+
+
+globaltec/
+
+medical_centre/
