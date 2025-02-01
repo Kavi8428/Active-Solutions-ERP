@@ -476,14 +476,26 @@ function populateCusData(data) {
 
 // Function to group data by customer and rep, and aggregate by month
 function groupDataByCustomerAndRep(data) {
+    function normalizeRepName(rep) {
+        const repMap = {
+            'A': 'Anjana',
+            'AD': 'amal',
+            'AR': 'Arkam',
+            'AS': 'Shaheer',
+            'SA': 'sameer'
+        };
+        return repMap[rep] || rep;
+    }
     const groupedData = {};
     data.forEach(item => {
         const key = `${item.customer}_${item.rep || 'N/A'}`;
 
+        const rep = normalizeRepName(item.rep || 'N/A');
+
         if (!groupedData[key]) {
             groupedData[key] = {
                 customer: item.customer,
-                rep: item.rep || 'N/A',
+                rep: rep,
                 jan: 0, feb: 0, mar: 0, apr: 0, may: 0, jun: 0,
                 jul: 0, aug: 0, sep: 0, oct: 0, nov: 0, dec: 0,
                 total: 0 // Initialize total to 0
@@ -509,6 +521,8 @@ function groupDataByCustomerAndRep(data) {
 function displayData(groupedData) {
     const tableData = Object.values(groupedData).sort((a, b) => b.total - a.total);
 
+   
+
     // Destroy the previous Handsontable instance if it exists
     if (hot) {
         hot.destroy();
@@ -519,7 +533,18 @@ function displayData(groupedData) {
         data: tableData,
         columns: [
             { data: 'customer', type: 'text', readOnly: true, filter: true },
-            { data: 'rep', type: 'text', readOnly: true, filter: true },
+            { 
+                data: 'rep', 
+                type: 'text', 
+                readOnly: true, 
+                filter: true,
+                renderer: function (instance, td, row, col, prop, value, cellProperties) {
+                    Handsontable.renderers.TextRenderer.apply(this, arguments);
+                    if (value) {
+                        td.textContent = value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+                    }
+                }
+            },
             { data: 'jan', type: 'numeric', readOnly: true, numericFormat: { pattern: '0,0.00' } },
             { data: 'feb', type: 'numeric', readOnly: true, numericFormat: { pattern: '0,0.00' } },
             { data: 'mar', type: 'numeric', readOnly: true, numericFormat: { pattern: '0,0.00' } },

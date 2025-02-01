@@ -12,7 +12,19 @@
     <script src="../../pages/dashboards/js/warranty.js"></script>
     <link rel="stylesheet" href="../../pages/dashboards/css/warranty.css">
 </head>
+
 <body class="bg-gray-100">
+<div id="loadingScreen" style="display: none;" class="loading-overlay">
+    <div id="loader" class="loader"></div>
+
+    <div class="loading-text">Loading...</div>
+</div>
+
+<div id="spinner" style="display: none;" class="loading-overlay">
+    <div id="loader" class="loader"></div>
+
+    <div class="loading-text">Loading...</div>
+</div>
     <!-- Navbar -->
     <nav class="bg-black opacity-80 p-2 w-75 hidden md:block rounded">
         <div class="flex justify-between items-center max-w-screen-xl mx-auto px-4">
@@ -29,57 +41,39 @@
         </div>
     </nav>
     <!-- Mobile Navbar -->
-    <nav class="bg-black opacity-80 p-2 w-full md:hidden mt-2">
-        <div class="flex justify-between items-center mx-4">
-            <a href="#" class="text-white text-md font-semibold">WARRANTY</a>
-            <input id="search2"
-                type="text"
-                placeholder="Search..."
-                class="px-1 py-0 rounded bg-white text-sm text-gray-800">
-            <button id="mobileMenuButton" class="text-white focus:outline-none">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
-                </svg>
-            </button>
-        </div>
-        <div id="mobileMenu" class="hidden flex gap-2 mt-2 text-sm ">
-            <a href="../../dashboard.php" class="block text-white py-2">DASHBOARD | </a>
-            <a href="../dashboards/masterReport.php" class="block text-white py-2">MASTER REPORT |</a>
-            <a href="../dashboards/masterInvoice.php" class="block text-white py-2">MASTER INVOICE</a>
+    <nav class="bg-black opacity-80 p-2 w-full md:hidden text-white mt-2">
+        <div class="d-flex  flex-column justify-between gap-1 w-100">
+            <div class="flex justify-between  gap-5 ps-2">
+                <a href="#" class="text-white text-md font-semibold">WARRANTY</a>
+                <button id="mobileMenuButton" class="text-white focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="w-full flex flex-grow ps-2">
+                <input id="search2"
+                    type="search"
+                    placeholder="Search..."
+                    class="px-1 py-0 rounded bg-white w-full text-sm text-gray-800">
+            </div>
+            <div id="mobileMenu" class="hidden flex gap-2 text-sm ps-2 ">
+                <a href="../../dashboard.php" class="block text-white py-2">DASHBOARD | </a>
+                <a href="../dashboards/masterReport.php" class="block text-white py-2">MASTER REPORT |</a>
+                <a href="../dashboards/masterInvoice.php" class="block text-white py-2">MASTER INVOICE</a>
+            </div>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <div class=" p-3 mx-auto mt-8">
+    <div class=" p-1 mx-auto">
         <div class="bg-transparent">
-            <div id="hot" class="overflow-x-auto"></div>
+            <div id="hot"></div>
         </div>
     </div>
-    <button id="openModalBtn" class="fixed bottom-8 right-8 bg-black opacity-80 text-white p-6 rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 text-3xl">
+    <!-- <button id="openModalBtn" class="fixed bottom-8 right-8 bg-black opacity-80 text-white p-6 rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 text-3xl">
         +
-    </button>
-
-    <!-- Modal -->
-    <div id="myModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center hidden">
-        <div class="bg-white w-full h-full  overflow-hidden shadow-xl transform transition-all relative">
-            <div class="bg-black opacity-80 px-2 py-0 flex justify-between rounded items-center">
-                <h2 class="leading-6 text-md font-semibold px-2 text-white">Add New Item</h2>
-                <button id="closeModalBtn" class="text-white bg-red-600 p-2 rounded hover:bg-red-700 focus:outline-none">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-            <div class="p-6 h-full overflow-y-auto">
-                <p class="text-gray-700">This is where you can add content to your full-screen modal.</p>
-                <!-- Add your form fields or content here -->
-            </div>
-            <div class="bg-gray-100 p-4 flex justify-end">
-                <button id="closeModalBtn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Close</button>
-            </div>
-
-        </div>
-    </div>
+    </button> -->
 
 </body>
 

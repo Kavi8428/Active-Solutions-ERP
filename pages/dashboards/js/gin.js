@@ -5,6 +5,23 @@ let invoiceData = []
 let invoiceItems = []
 let stockSerials
 
+// Filter data based on the 'code' parameter in the URL
+const urlParams = new URLSearchParams(window.location.search)
+
+selectedId = {
+  id: urlParams.get('id'),
+  code: urlParams.get('code')
+}
+
+if (urlParams) {
+  if (selectedId.code) {
+    fetchInvoiceData(selectedId.code)
+  }
+  setTimeout(() => {
+    displayGinData(selectedId)
+  }, 1000)
+}
+
 async function fetchStock () {
   const loadingScreen = document.getElementById('loadingScreen')
   loadingScreen.style.display = 'flex'
@@ -134,9 +151,7 @@ async function fetchGinData () {
     // Store the fetched data in global variable
 
     // Call function to process or display the fetched data
-    setTimeout(() => {
-      ginData = data
-    }, 1000)
+    ginData = data
   } catch (error) {
     console.error('There was a problem with the fetch operation:', error)
   }
@@ -145,7 +160,7 @@ async function fetchGinData () {
 fetchGinData()
 
 // Function to fetch invoice data from the backend
-async function fetchInvoiceData () {
+async function fetchInvoiceData (code) {
   try {
     const response = await fetch('../../functions/fetchInvoice.php', {
       method: 'POST', // Specify the HTTP method as POST
@@ -159,10 +174,6 @@ async function fetchInvoiceData () {
     }
 
     const data = await response.json() // Parse the JSON response
-
-    // Filter data based on the 'code' parameter in the URL
-    const urlParams = new URLSearchParams(window.location.search)
-    const code = urlParams.get('code') // Get 'code' from the URL
 
     if (code) {
       const filteredData = data.filter(item => item.inv === code)
@@ -178,9 +189,6 @@ async function fetchInvoiceData () {
     console.error('Error occurred before fetching invoice:', error)
   }
 }
-
-// Call the function to fetch and filter data
-fetchInvoiceData()
 
 async function fetchInvoiceItems () {
   await fetch('../../functions/fetchInvoiceItems.php', {
@@ -206,15 +214,21 @@ fetchInvoiceItems()
 
 // Example function to display or process fetched gin data
 function displayGinData (selectedId) {
-  let data = ginData
+  let invNum
   let urlId
-  const urlParams = new URLSearchParams(window.location.search)
-  if (selectedId) {
-    urlId = selectedId
+  let data = []
+
+  if (ginData.length > 0) {
+    data = ginData
   } else {
-    urlId = urlParams.get('id')
+    console.log('No gin data found')
   }
-  const invNum = urlParams.get('code')
+
+  if (selectedId && selectedId.code) {
+    invNum = selectedId.code
+  } else if (selectedId && selectedId.id) {
+    urlId = selectedId.id
+  }
 
   if (urlId) {
     const filteredData = data.filter(x => x.id == urlId)
@@ -297,6 +311,8 @@ function displayGinData (selectedId) {
       document.getElementById('object').value = filteredInvoice.object
     } else {
       //console.log('filteredInvoice is empty')
+      document.getElementById('invNo').value = invNum
+
     }
   } else {
     //  console.log('URL ID is not found.')
@@ -306,6 +322,8 @@ function displayGinData (selectedId) {
     })
   }
 }
+
+displayGinData()
 
 async function fetchGinItems () {
   try {
@@ -342,8 +360,8 @@ function displyGinItems (selectedId) {
   }
   const invNum = urlParams.get('code')
 
-  let initialData;
-  console.log('URL ID:', urlId);
+  let initialData
+  // console.log('URL ID:', urlId);
   if (urlId) {
     const filteredItems = ginItems.filter(item => item.gin_id === urlId)
     //  console.log('Filtered GinItems:', filteredItems)
@@ -610,8 +628,11 @@ document.getElementById('searchInput').addEventListener('input', function () {
             <td>${item.date}</td>
         `
       row.addEventListener('click', () => {
-        displayGinData(item.id);
-        displyGinItems (item.id);
+        selectedId = {
+          id: item.id
+        }
+        displayGinData(selectedId)
+        displyGinItems(item.id)
         // window.location.href = `ginTemplate.php?code=${item.id}`
       })
       resultsTable.appendChild(row)

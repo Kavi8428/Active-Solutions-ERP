@@ -34,6 +34,8 @@ async function fetchData (url, arrayName) {
   }
 }
 
+document.getElementById('spinner').style.display = 'flex'
+
 fetchData('../../functions/fetchGrnData.php', 'grnDataArray')
 fetchData('../../functions/fetchGrnItem.php', 'grnItemArray')
 fetchData('../../functions/fetchInvoice.php', 'invDataArray')
@@ -83,7 +85,7 @@ function mergeInvData () {
         : ['']
       return serials.map(sn => ({
         invNo: item.inv,
-        status: item.status || '',
+        status: item.status || 'invoice',
         customer: item.customer,
         salesRep: item.rep,
         item: item.item_code,
@@ -148,9 +150,9 @@ document.addEventListener('DOMContentLoaded', function () {
       const container = document.getElementById('hot')
 
       // Calculate dynamic width and height
-      const tableHeight = window.innerHeight * 0.8 // 80% of screen height
+      const tableHeight = window.innerHeight * 0.9 // 80% of screen height
       const tableWidth = window.innerWidth * 0.9 // 90% of screen width
-      const columnWidths = [80,80, 150, 120, 100, 130, 80, 150, 150, 200,80] // Adjust widths as needed
+      const columnWidths = [80,50,80, 150, 100, 100, 130, 80, 90, 200, 140] // Adjust widths as needed
       let lastClickTime = 0
       let lastClickCell = null
 
@@ -160,73 +162,71 @@ document.addEventListener('DOMContentLoaded', function () {
         width: tableWidth, // Dynamic width
         stretchH: 'all', // Stretch columns to fit width
         colHeaders: [
-          'Invoice No',
+          'Ref No',
           'Status',
+          'Object',
           'Customer',
           'Sales Rep',
           'Item',
           'Serial Number',
           'Value',
-          'Created At',
-          'Warranty Date',
+          'W-Ex Date',
           'Description',
-          'Object'
-          
-
+          'Created At'
         ], // Define column headers
         columns: [
           { data: 'invNo', type: 'text', readOnly: true },
           { data: 'status', type: 'text', readOnly: true },
+          { data: 'object', type: 'text', readOnly: true },
           { data: 'customer', type: 'text', readOnly: true },
           { data: 'salesRep', type: 'text', readOnly: true },
           { data: 'item', type: 'text', readOnly: true },
           { data: 'sn', type: 'text', readOnly: true },
           {
-            data: 'value',
-            type: 'numeric',
-            numericFormat: { pattern: '0,0.00' },
-            readOnly: true
+        data: 'value',
+        type: 'numeric',
+        numericFormat: { pattern: '0,0.00' },
+        readOnly: true
           },
           {
-            data: 'createdAt',
-            type: 'date',
-            dateFormat: 'YYYY-MM-DD HH:mm:ss',
-            readOnly: true
-          },
-          {
-            data: 'warrantyDate',
-            type: 'text',
-            dateFormat: 'YYYY-MM-DD',
-            readOnly: true
+        data: 'warrantyDate',
+        type: 'text',
+        dateFormat: 'YYYY-MM-DD',
+        readOnly: true
           },
           { data: 'description', type: 'text', readOnly: true },
-          { data: 'object', type: 'text', readOnly: true }
-
+          {
+        data: 'createdAt',
+        type: 'date',
+        dateFormat: 'YYYY-MM-DD HH:mm:ss',
+        readOnly: true
+          }
         ], // Bind data fields to columns
         colWidths: columnWidths, // Apply fixed column widths
         width: '100%', // Set width to 100% of container
-        rowHeaders: false, // Enable row headers
+        stretchH: 'all', // Stretch columns to fill width
+        rowHeaders: true, // Enable row headers
         filters: true, // Enable column filters
         dropdownMenu: true, // Enable dropdown menu for additional options
         columnSorting: true, // Enable column sorting
         contextMenu: {
           items: {
-            refresh_table: {
-              name: 'Refresh Table',
-              callback: function () {
-                // Define the refresh logic here
-                refreshTable()
-              }
-            },
-            separator: Handsontable.plugins.ContextMenu.SEPARATOR, // Add a separator
-            ...Handsontable.plugins.ContextMenu.defaultItems // Include default items
+        refresh_table: {
+          name: 'Refresh Table',
+          callback: function () {
+            // Define the refresh logic here
+            refreshTable()
+          }
+        },
+        separator: Handsontable.plugins.ContextMenu.SEPARATOR, // Add a separator
+        ...Handsontable.plugins.ContextMenu.defaultItems // Include default items
           }
         },
         manualColumnResize: true, // Allow resizing of columns
         licenseKey: 'non-commercial-and-evaluation', // Free license
         afterChange: function (changes, source) {
           if (source === 'loadData') {
-            return // Skip logic on initial data load
+        return // Skip logic on initial data load
           }
           console.log('Data changed:', changes) // Log changes for debugging
         },
@@ -235,45 +235,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
           // Check if this click is within a double-click time threshold and on the same cell
           if (
-            lastClickCell &&
-            coords.row === lastClickCell.row &&
-            coords.col === lastClickCell.col &&
-            currentTime - lastClickTime < 300 // Adjust threshold as needed
+        lastClickCell &&
+        coords.row === lastClickCell.row &&
+        coords.col === lastClickCell.col &&
+        currentTime - lastClickTime < 300 // Adjust threshold as needed
           ) {
-            // Double-click detected
-            console.log(
-              'Double-clicked value: ' +
-                hot.getDataAtCell(coords.row, coords.col)
-            )
-            moreDetails(hot.getDataAtCell(coords.row, coords.col))
+        // Double-click detected
+        const rowData = hot.getDataAtRow(coords.row)
+       // console.log('Double-clicked row data:', rowData)
+        moreDetails(rowData)
           }
 
           // Update the last click information
           lastClickTime = currentTime
           lastClickCell = { row: coords.row, col: coords.col }
-        },
-          cells: function (row, col) {
-          const cellProperties = {}
-          const data = this.instance.getDataAtRow(row)
-          if (col === 10) { // Assuming 'object' column is at index 10
-        if (data[10] === 'sale') {
-          cellProperties.renderer = function (instance, td) {
-            td.style.backgroundColor = 'red'
-            Handsontable.renderers.TextRenderer.apply(this, arguments)
-          }
-        } else if (data[10] === 'newStock') {
-          cellProperties.renderer = function (instance, td) {
-            td.style.backgroundColor = 'green'
-            Handsontable.renderers.TextRenderer.apply(this, arguments)
-          }
-        } else {
-          cellProperties.renderer = function (instance, td) {
-            td.style.backgroundColor = 'yellow'
-            Handsontable.renderers.TextRenderer.apply(this, arguments)
-          }
-        }
-          }
-          return cellProperties
         }
       })
 
@@ -301,21 +276,21 @@ document.addEventListener('DOMContentLoaded', function () {
         filterTable(query)
       })
 
-      // Modal functionality
-      const modal = document.getElementById('myModal')
-      const openModalBtn = document.getElementById('openModalBtn')
-      const closeModalBtn = document.getElementById('closeModalBtn')
-      const hotContainer = document.getElementById('hot-container')
+      // // Modal functionality
+      // const modal = document.getElementById('myModal')
+      // const openModalBtn = document.getElementById('openModalBtn')
+      // const closeModalBtn = document.getElementById('closeModalBtn')
+      // const hotContainer = document.getElementById('hot-container')
 
-      openModalBtn.addEventListener('click', () => {
-        modal.classList.remove('hidden')
-        // hotContainer.classList.add('blur'); // Apply blur effect
-      })
+      // openModalBtn.addEventListener('click', () => {
+      //   modal.classList.remove('hidden')
+      //   // hotContainer.classList.add('blur'); // Apply blur effect
+      // })
 
-      closeModalBtn.addEventListener('click', () => {
-        modal.classList.add('hidden')
-        // hotContainer.classList.remove('blur'); // Remove blur effect
-      })
+      // closeModalBtn.addEventListener('click', () => {
+      //   modal.classList.add('hidden')
+      //   // hotContainer.classList.remove('blur'); // Remove blur effect
+      // })
 
       // Mobile menu functionality
       const mobileMenuButton = document.getElementById('mobileMenuButton')
@@ -335,9 +310,21 @@ async function refreshTable () {
 }
 
 function moreDetails (value) {
-  const modalBody = document.getElementById('modalBody')
-  modalBody.innerHTML = `<p>${value}</p>`
-  openModal()
+
+  
+  console.log(value[0]);
+
+
+
+  if (value && value[1] != "null") {
+    if (value[1] == 'invoice' || value[1] == 'mInvoice') {
+      window.location.href = `../../pages/dashboards/invoice_new.php?id=${value[0]}`
+    } else if (value[1] == 'GRN') {
+      window.location.href = `../../pages/dashboards/grn.php?id=${value[0].replace(/^(GRN000)/, '')}`
+    } else if (value[1] == 'GIN') {
+      window.location.href = `../../pages/dashboards/gin.php?id=${value[0].replace(/^(GIN000)/, '')}`
+    }
+}
 }
 
 // // Event listener for refresh button
