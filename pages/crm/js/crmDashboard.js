@@ -2906,6 +2906,26 @@ function populateGp(crmItems) {
       ];
     });
 
+    // Calculate totals for each month
+    const monthlyTotals = mapData.reduce((totals, row) => {
+      // Start from index 3 since first 3 columns are REP, PARTNER, END-CUST
+      for (let i = 3; i < row.length; i++) {
+        totals[i] = (totals[i] || 0) + Number(row[i]);
+      }
+      return totals;
+    }, []);
+
+    // Create total row with proper formatting
+    const totalRow = [
+      'TOTAL',
+      '',
+      '',
+      ...monthlyTotals.slice(3).map(total => Number(total.toFixed(2)))
+    ];
+
+    // Add total row to the data
+    mapData.push(totalRow);
+
     const headers = [
       'REP',
       'PARTNER',
@@ -2920,6 +2940,15 @@ function populateGp(crmItems) {
       defaultRenderer.apply(this, arguments);
 
       const rowData = instance.getDataAtRow(row);
+      const isLastRow = row === instance.countRows() - 1;
+
+      if (isLastRow) {
+        // Styling for total row
+        td.style.backgroundColor = '#E3F2FD';
+        td.style.fontWeight = 'bold';
+        return td;
+      }
+
       const monthData = rowData.slice(3);
       const hasAnyGP = monthData.some(val => Number(val) !== 0);
 
@@ -2953,7 +2982,7 @@ function populateGp(crmItems) {
       filters: true,
       dropdownMenu: true,
       contextMenu: true,
-      minSpareRows: 1,
+      minSpareRows: 0, // Changed from 1 to 0 since we have a total row
       columns: [
         { type: 'text' },
         { type: 'text' },
