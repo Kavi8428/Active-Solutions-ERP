@@ -623,8 +623,13 @@ function sendData () {
         const dataToSendArray = itemDataList.map(itemData => {
           const matchedItem = response.find(
             item => item.item_code === itemData['ITEM']
-          )
-          const brand = matchedItem ? matchedItem.brand : ''
+          );
+
+          console.log('matchedItem', matchedItem);
+          const brand = matchedItem ? matchedItem.brand : '';
+          const quantity = parseFloat(itemData['QUANTITY']) || 0;
+          const unitPrice = parseFloat(itemData['UNIT PRICE']) || 0;
+          const vatValue = unitPrice * (itemData['VAT']/100); // Assuming VAT is 15%
 
           return {
             id: '',
@@ -638,8 +643,8 @@ function sendData () {
             itemDescription: itemData['DESCRIPTION'] || '',
             brand: brand,
             serial: itemData['SERIALS'] || '',
-            value: itemData['UNIT PRICE'] || '',
-            qty: itemData['QUANTITY'] || '',
+            value: unitPrice.toFixed(2) || '',
+            qty: quantity.toFixed(2) || '',
             object: generalData.object || '',
             status: generalData.status || '',
             warranty: itemData['WARRANTY'] || '',
@@ -647,13 +652,13 @@ function sendData () {
             rep: generalData.rep,
             date: generalData.invDate,
             memo: itemData['DESCRIPTION'] || '',
-            vat: itemData['VAT'] || '',
+            vat: vatValue.toFixed(2) || '',
             others: itemData['OTHERS'] || '',
             lInvNo: generalData['lInvNo'] || ''
-          }
-        })
+          };
+        });
 
-       // console.log('dataToSendArray', dataToSendArray)
+       console.log('dataToSendArray', dataToSendArray)
 
         // Send each item individually to match the PHP script requirements
         dataToSendArray.forEach(item => {

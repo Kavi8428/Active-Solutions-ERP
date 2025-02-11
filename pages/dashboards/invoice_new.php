@@ -71,6 +71,7 @@ if (!isset($_SESSION["user"])) {
 
 <body class="g-sidenav-show  bg-gray-200 ">
     <div id="loadingScreen" class="loading-overlay">
+        
         <div class="loader"></div>
 
         <div class="loading-text">Loading...</div>

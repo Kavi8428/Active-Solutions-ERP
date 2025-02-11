@@ -307,7 +307,7 @@ multiselectEditor.prototype.createElements = function() {
     const dropdownList = document.createElement('div');
     dropdownList.className = 'multiselect-dropdown-list';
 
-    const options = ['INV', 'GIN', 'GRN', 'WARRANTY GIN', 'WARRANTY GRN'];
+    const options = ['invoice','mInvoice', 'GIN', 'GRN', 'WARRANTY GIN', 'WARRANTY GRN'];
 
     options.forEach(option => {
         const label = document.createElement('label');
@@ -503,7 +503,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!dropdown.classList.contains('initialized')) {
                     dropdown.classList.add('initialized');
                     const dropdownList = dropdown.querySelector('.multiselect-dropdown-list');
-                    const options = ['INV', 'GIN', 'GRN', 'WARRANTY GIN', 'WARRANTY GRN'];
+                    const options = ['invoice', 'mInvoice', 'GIN', 'GRN', 'WARRANTY GIN', 'WARRANTY GRN'];
 
                     options.forEach(option => {
                         const label = document.createElement('label');

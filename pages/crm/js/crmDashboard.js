@@ -134,8 +134,9 @@ async function fetchData () {
       calculateAndDisplayTotals(crmData)
       populateGp(crmItems)
       populateDealNumber(crmData)
-      dailyPerformanceDeal(crmData);
-      dailyPerformanceDealActions(crmItems);
+      dailyPerformanceDeal(crmData)
+      dailyPerformanceDealActions(crmItems)
+      linkCards(crmData, crmItems, users)
       // Access the data later
       setTimeout(() => {
         //  //console.log('Accessing crmData globally:', crmData);
@@ -452,25 +453,25 @@ function populateModels (products) {
 }
 
 function populateUsers (users) {
-  const fupUser = document.getElementById('fup');
-  const performanceRep = document.getElementById('performanceRep');
-  fupUser.innerHTML = '<option value="">SELECT</option>';
-  performanceRep.innerHTML = '<option>SELECT</option>';
+  const fupUser = document.getElementById('fup')
+  const performanceRep = document.getElementById('performanceRep')
+  fupUser.innerHTML = '<option value="">SELECT</option>'
+  performanceRep.innerHTML = '<option>SELECT</option>'
 
   // Add user names to the select elements
   users.forEach(user => {
     // Create and append options for the fupUser dropdown
-    const fupOption = document.createElement('option');
-    fupOption.value = user.user_name;
-    fupOption.textContent = user.user_name;
-    fupUser.appendChild(fupOption);
+    const fupOption = document.createElement('option')
+    fupOption.value = user.user_name
+    fupOption.textContent = user.user_name
+    fupUser.appendChild(fupOption)
 
     // Create and append options for the performanceRep dropdown
-    const performanceOption = document.createElement('option');
-    performanceOption.value = user.user_name;
-    performanceOption.textContent = user.user_name;
-    performanceRep.appendChild(performanceOption);
-  });
+    const performanceOption = document.createElement('option')
+    performanceOption.value = user.user_name
+    performanceOption.textContent = user.user_name
+    performanceRep.appendChild(performanceOption)
+  })
 
   // Initialize Select2
   $(document).ready(function () {
@@ -479,16 +480,16 @@ function populateUsers (users) {
       width: '100%',
       allowClear: true,
       dropdownParent: $('#detaiTableModal') // Fixes dropdown positioning
-    });
-  });
+    })
+  })
 
   $(document).ready(function () {
     $('#performanceRep').select2({
       placeholder: 'Select Rep',
       width: '100%',
-      allowClear: true,
-    });
-  });
+      allowClear: true
+    })
+  })
 }
 
 //-----------------------DashBoard--------------------------------DashBoard-----------------------------DashBoard----------------------------------
@@ -796,6 +797,76 @@ function populateDashBoard (crmItems) {
   }
 }
 
+const linkCards = async (crmData, crmItems) => {
+  // console.log('crmData On lnkCard function', crmData);
+  // Add event listeners to log card details on click
+  document.querySelectorAll('.dashboard-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const cardTitle = card.querySelector('.card-title').textContent
+
+      if (cardTitle === 'OverDue Deals') {
+        console.log('OverDue Deals')
+        const overdueDealsCount = crmItems
+          .filter(item => {
+            const followUpDate = new Date(item.followUp)
+            return !isNaN(followUpDate) && followUpDate < new Date()
+          })
+          .reduce((acc, item) => {
+            const existingItem = acc.find(i => i.trnNo === item.trnNo)
+            if (
+              !existingItem ||
+              new Date(existingItem.followUp) < new Date(item.followUp)
+            ) {
+              acc = acc.filter(i => i.trnNo !== item.trnNo)
+              acc.push(item)
+            }
+            return acc
+          }, [])
+        showDetailTableTab()
+        populateCrmItems(overdueDealsCount, crmData)
+      } else if (cardTitle === 'Lead Deals') {
+        const initialDealsCount = crmItems.filter(
+          item => item.stage === 'initial'
+        )
+        // console.log('Lead Deals', initialDealsCount);
+        showDetailTableTab()
+        populateCrmItems(initialDealsCount, crmData)
+      } else if (cardTitle === 'In-Progress Deals') {
+        const inProgressDealsCount = crmItems.filter(
+          item => item.stage === 'in-progress'
+        )
+        showDetailTableTab()
+        populateCrmItems(inProgressDealsCount, crmData)
+        // console.log('In-Progress Deals', inProgressDealsCount)
+      } else if (cardTitle === 'Quoted Deals') {
+        const quotededDealsCount = crmItems.filter(
+          item => item.type === 'Quote'
+        )
+        showDetailTableTab()
+        populateCrmItems(quotededDealsCount, crmData)
+      } else if (cardTitle === 'Invoiced Deals') {
+        const invoicedDealsCount = crmItems.filter(
+          item => item.type === 'Invoice'
+        )
+        showDetailTableTab()
+        populateCrmItems(invoicedDealsCount, crmData)
+      } else if (cardTitle === 'Completed Deals') {
+        const completedCount = crmItems.filter(
+          item => item.stage === 'completed'
+        )
+        showDetailTableTab()
+        populateCrmItems(completedCount, crmData)
+      } else if (cardTitle === 'Continuous Deals') {
+        const continuosDealsCount = crmItems.filter(
+          item => item.stage === 'continuous'
+        )
+        showDetailTableTab()
+        populateCrmItems(continuosDealsCount, crmData)
+      }
+    })
+  })
+}
+
 // Function to filter events based on the status
 function filterDeals (filter) {
   const allCards = document.querySelectorAll('.Deals-container .event-card')
@@ -938,22 +1009,22 @@ function populateCrmData (crmData, crmItems, users) {
     sortIndicator: true,
     columnSorting: {
       sortEmptyCells: true, // Sort empty cells last
-      compareFunctionFactory(sortOrder, columnMeta) {
+      compareFunctionFactory (sortOrder, columnMeta) {
         if (columnMeta.data === 'date') {
           return function (a, b) {
             // Parse the dates (e.g., "YYYY-MM-DD") into `Date` objects
-            const dateA = a[1] ? new Date(a[1]) : new Date(0); // Handle null/empty dates
-            const dateB = b[1] ? new Date(b[1]) : new Date(0);
-  
-            if (dateA < dateB) return sortOrder === 'asc' ? -1 : 1;
-            if (dateA > dateB) return sortOrder === 'asc' ? 1 : -1;
-            return 0; // If dates are equal, keep the same order
-          };
+            const dateA = a[1] ? new Date(a[1]) : new Date(0) // Handle null/empty dates
+            const dateB = b[1] ? new Date(b[1]) : new Date(0)
+
+            if (dateA < dateB) return sortOrder === 'asc' ? -1 : 1
+            if (dateA > dateB) return sortOrder === 'asc' ? 1 : -1
+            return 0 // If dates are equal, keep the same order
+          }
         }
         return function (a, b) {
-          return sortOrder === 'asc' ? a[1] - b[1] : b[1] - a[1];
-        };
-      },
+          return sortOrder === 'asc' ? a[1] - b[1] : b[1] - a[1]
+        }
+      }
     },
     filters: true, // Enable the filters plugin
     dropdownMenu: true, // Enable dropdown menu for filtering
@@ -1396,7 +1467,7 @@ filterButtons.forEach(button => {
 })
 
 function populateCrmItems (crmItems, crmData) {
-  // console.log('newData fetched')
+  // console.log('newData fetched',crmItems)
   const popupEl = document.getElementById('hover-popup')
 
   // Sort CRM items by ID in descending order
@@ -1759,6 +1830,7 @@ function populateCrmItems (crmItems, crmData) {
     .addEventListener('input', function (e) {
       const query = e.target.value.toLowerCase() // Get the search query in lowercase
       const searchableFields = [
+        'id',
         'trnNo',
         'date',
         'salesRep',
@@ -2100,12 +2172,14 @@ document
     })
       .then(response => {
         if (!response.ok) {
-          console.error(`Network response was not ok. Status: ${response.status}, StatusText: ${response.statusText}`);
+          console.error(
+            `Network response was not ok. Status: ${response.status}, StatusText: ${response.statusText}`
+          )
           return response.text().then(errorDetails => {
-            console.error('Backend response details:', errorDetails);
-            throw new Error('Failed to fetch from the backend.');
-          });
-                }
+            console.error('Backend response details:', errorDetails)
+            throw new Error('Failed to fetch from the backend.')
+          })
+        }
         return response.text()
       })
       .then(data => {
@@ -2155,7 +2229,7 @@ document
         modalElement.dispatchEvent(event)
 
         //console.log("Modal hidden, fields cleared, and cleaned up.");
-      }) 
+      })
       .catch(error => {
         console.error('Error:', error)
 
@@ -2760,240 +2834,307 @@ function switchTab (tabId) {
   circularMenu.classList.remove('active')
 }
 function populateDealNumber (crmData) {
-  console.log('crmData:', crmData);
+  // console.log('crmData:', crmData)
   document.getElementById('multyTender').addEventListener('input', function () {
-    const enteredNumber = this.value.trim();
-    const matchedCrmData = crmData.find(data => data.id === enteredNumber);
-    const descriptionTextarea = document.getElementById('multyTenderDescription');
+    const enteredNumber = this.value.trim()
+    const matchedCrmData = crmData.find(data => data.id === enteredNumber)
+    const descriptionTextarea = document.getElementById(
+      'multyTenderDescription'
+    )
     if (matchedCrmData) {
-      console.log('Description:', matchedCrmData.description);
-      descriptionTextarea.value = matchedCrmData.description;
+      console.log('Description:', matchedCrmData.description)
+      descriptionTextarea.value = matchedCrmData.description
     } else {
-      console.log('No matching CRM data found for entered number:', enteredNumber);
-      descriptionTextarea.value = ''; // Clear the textarea if no match is found
+      console.log(
+        'No matching CRM data found for entered number:',
+        enteredNumber
+      )
+      descriptionTextarea.value = '' // Clear the textarea if no match is found
     }
-  });
+  })
 }
 
 
-function populateGp (crmItems) {
-  //console.log(crmItems); // Check filtered data in console
+// -------------------------------------------Poplate 
 
-  // Map the required data
-  let mappedData = crmItems.map(item => {
-    return {
-      trnNo: item.trnNo,
-      rep: item.salesRep,
-      type: item.type,
-      gpmonth: item.gpMonth,
-      gp: item.gp,
-      customer: item.customer,
-      partner: item.partner
-    }
-  })
+function populateGp(crmItems) {
+  const gpYearSelect = document.getElementById('gpYear');
 
-  // Filter the mapped data
-  let filteredData = mappedData.filter(items => {
-    return items.type == 'Quote' || items.type == 'Invoice'
-  })
+  function filterDataByYear(year) {
+    const filteredData = crmItems.filter(item => {
+      const itemYear = new Date(item.gpMonth).getFullYear();
+      return itemYear === year && (item.type === 'Quote' || item.type === 'Invoice');
+    });
 
-  // Target the Handsontable container
-  const container = document.getElementById('gpTable')
-  function capitalizeRenderer (
-    instance,
-    td,
-    row,
-    col,
-    prop,
-    value,
-    cellProperties
-  ) {
-    // Clear the cell before rendering
-    Handsontable.renderers.TextRenderer.apply(this, arguments)
+    const now = new Date();
+    const thisMonth = now.toISOString().slice(0, 7);
 
-    if (value) {
-      // Capitalize the first letter and keep the rest of the string as-is
-      const capitalizedValue =
-        value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
-      td.textContent = capitalizedValue // Render updated value in the table
-    }
-  }
+    const lastMonthDate = new Date(now);
+    lastMonthDate.setMonth(now.getMonth() - 1);
+    const lastMonth = lastMonthDate.toISOString().slice(0, 7);
 
-  // Define Handsontable settings
-  const hot = new Handsontable(container, {
-    data: filteredData, // Pass the filtered data
-    colHeaders: [
-      'TRN-No',
-      'Rep',
-      'Customer',
-      'Partner',
-      'Type',
-      'GP Month',
-      'GP'
-    ], // Table headers
-    columns: [
-      { data: 'trnNo', type: 'text', width: '60' },
-      {
-        data: 'rep',
-        type: 'text',
-        width: '100',
-        renderer: capitalizeRenderer // Custom renderer for Rep column
-      },
-      { data: 'customer', type: 'text', width: '200' },
-      { data: 'partner', type: 'text', width: '200' },
-      { data: 'type', type: 'text', width: '100' },
-      { data: 'gpmonth', type: 'text', width: '100' },
-      {
-        data: 'gp',
-        type: 'numeric',
-        numericFormat: {
-          pattern: '0,0.00', // Comma separated with two decimal places
-          culture: 'en-US' // Ensures proper number formatting
+    const currentMonthIndex = now.getMonth();
+    const lastMonthIndex = (currentMonthIndex - 1 + 12) % 12;
+
+    const allMonths = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    const otherMonthsHeaders = allMonths.filter((month, index) => {
+      return index !== currentMonthIndex && index !== lastMonthIndex;
+    });
+
+    const mapData = filteredData.map(item => {
+      let thisMonthGp = item.gpMonth === thisMonth ? item.gp : 0;
+      let lastMonthGp = item.gpMonth === lastMonth ? item.gp : 0;
+
+      const otherMonthsData = otherMonthsHeaders.map(month => {
+        const monthIndex = allMonths.indexOf(month);
+        let computedDate = new Date(year, monthIndex);
+        const monthYear = computedDate.toISOString().slice(0, 7);
+        return item.gpMonth === monthYear ? item.gp : 0;
+      });
+
+      return [
+        item.salesRep.charAt(0).toUpperCase() + item.salesRep.slice(1),
+        item.partner,
+        item.customer,
+        thisMonthGp,
+        lastMonthGp,
+        ...otherMonthsData
+      ];
+    });
+
+    const headers = [
+      'REP',
+      'PARTNER',
+      'END-CUST',
+      'THIS MONTH',
+      'LAST MONTH',
+      ...otherMonthsHeaders
+    ];
+
+    function customRenderer(instance, td, row, col, prop, value, cellProperties) {
+      const defaultRenderer = Handsontable.renderers.getRenderer(cellProperties.type) || Handsontable.renderers.TextRenderer;
+      defaultRenderer.apply(this, arguments);
+
+      const rowData = instance.getDataAtRow(row);
+      const monthData = rowData.slice(3);
+      const hasAnyGP = monthData.some(val => Number(val) !== 0);
+
+      if (!hasAnyGP) {
+        td.style.backgroundColor = '#FFCDD2';
+      } else {
+        if (col === 3 && Number(rowData[3]) !== 0) {
+          td.style.backgroundColor = '#B3E5FC';
+        } else if (col === 4 && Number(rowData[4]) !== 0) {
+          td.style.backgroundColor = '#C8E6C9';
+        } else {
+          td.style.backgroundColor = '';
         }
       }
-    ],
-    rowHeaders: false, // Show row numbers
-    height: 500,
-    width: '100%',
-    stretchH: 'all',
-    filters: true,
-    dropdownMenu: true,
-    sortIndicator: true,
-    columnSorting: true,
-    licenseKey: 'non-commercial-and-evaluation'
-  })
+
+      return td;
+    }
+
+    const container = document.querySelector('#gpTable');
+
+    const hot = new Handsontable(container, {
+      data: mapData,
+      colHeaders: headers,
+      rowHeaders: true,
+      height: 'calc(100vh - 200px)',
+      width: 'auto',
+      licenseKey: 'non-commercial-and-evaluation',
+      stretchH: 'all',
+      autoWrapRow: true,
+      columnSorting: true,
+      filters: true,
+      dropdownMenu: true,
+      contextMenu: true,
+      minSpareRows: 1,
+      columns: [
+        { type: 'text' },
+        { type: 'text' },
+        { type: 'text' },
+        {
+          type: 'numeric',
+          numericFormat: {
+            pattern: '0,0.00',
+            culture: 'en-US'
+          }
+        },
+        {
+          type: 'numeric',
+          numericFormat: {
+            pattern: '0,0.00',
+            culture: 'en-US'
+          }
+        },
+        ...Array(otherMonthsHeaders.length).fill({
+          type: 'numeric',
+          numericFormat: {
+            pattern: '0,0.00',
+            culture: 'en-US'
+          }
+        })
+      ],
+      cells: function (row, col, prop) {
+        const cellProperties = {};
+        cellProperties.renderer = customRenderer;
+        return cellProperties;
+      },
+      fixedColumnsStart: 3,
+      manualColumnResize: true,
+      manualRowResize: true
+    });
+  }
+
+  const currentYear = new Date().getFullYear();
+  filterDataByYear(currentYear);
+
+  gpYearSelect.addEventListener('change', function () {
+    const selectedYear = parseInt(this.value, 10);
+    filterDataByYear(selectedYear);
+  });
 }
+//-------------------------------------------------- daily performance report---------------------------------
 
-;
-
-function dailyPerformanceDeal(crmData) {
+function dailyPerformanceDeal (crmData) {
   // Sort the data by the `date` field in descending order
   crmData.sort((a, b) => {
-    const dateA = new Date(a.date);
-    const dateB = new Date(b.date);
+    const dateA = new Date(a.date)
+    const dateB = new Date(b.date)
 
     // Handle invalid dates by treating them as the earliest possible
-    if (isNaN(dateA)) return 1;
-    if (isNaN(dateB)) return -1;
+    if (isNaN(dateA)) return 1
+    if (isNaN(dateB)) return -1
 
-    return dateB - dateA;
-  });
+    return dateB - dateA
+  })
 
   // Define column headers and their display properties
   const columnsConfig = [
+    { data: 'id', title: 'DEAL No', width: 60 },
     { data: 'date', title: 'DATE', width: 60 },
     { data: 'salesRep', title: 'REP', width: 55 },
     { data: 'customer', title: 'CUSTOMER', width: 150 },
     { data: 'partner', title: 'PARTNER', width: 150 },
     { data: 'description', title: 'DESCRIPTION', width: 250 },
     { data: 'stage', title: 'STAGE', width: 50 },
-    { data: 'updated_at', title: 'LAST UPDATE', width: 100 },
-  ];
+    { data: 'updated_at', title: 'LAST UPDATE', width: 100 }
+  ]
 
   // Get the container element for Handsontable
-  const container = document.getElementById('table1');
-
-  // Generate row headers based on `id`
-  const rowHeaders = crmData.map(row => row.id);
+  const container = document.getElementById('table1')
 
   // Initialize Handsontable
   const hot = new Handsontable(container, {
     data: crmData, // Pass the sorted crmData directly as an array of objects
     colHeaders: columnsConfig.map(col => col.title), // Use the titles for headers
-    rowHeaders: rowHeaders, // Use `id` values as row headers
+    rowHeaders: false, // Disable row headers
     columns: columnsConfig, // Set column configurations
     height: '100%', // Make table responsive
     width: '100%',
     licenseKey: 'non-commercial-and-evaluation',
-    stretchH: 'all' // Stretch columns to fill the container
-  });
+    stretchH: 'all', // Stretch columns to fill the container
+    readOnly: true, // Make the table read-only
+    afterOnCellDblClick: function (event, coords, td) {
+      const rowData = this.getSourceDataAtRow(coords.row)
+      console.log('Double-clicked row data:', rowData)
+    }
+  })
 
   // Update total deals count
-  function updateTotalDealsCount(filteredData) {
-    const totalDeals = filteredData.length; // Calculate the total deals
-    document.getElementById('dailyTotalDeal').textContent = totalDeals; // Update the display
+  function updateTotalDealsCount (filteredData) {
+    const totalDeals = filteredData.length // Calculate the total deals
+    document.getElementById('dailyTotalDeal').textContent = totalDeals // Update the display
   }
 
   // Variables to track selected filters
-  let selectedDate = null;
-  let selectedRep = null;
+  let selectedDate = null
+  let selectedRep = null
 
   // Function to filter data based on the selected filters
-  function filterData() {
-    let filteredData = crmData;
+  function filterData () {
+    let filteredData = crmData
 
     if (selectedDate) {
-      filteredData = filteredData.filter(item => item.date === selectedDate);
+      filteredData = filteredData.filter(item => item.date === selectedDate)
     }
 
     if (selectedRep) {
-      filteredData = filteredData.filter(item => item.salesRep === selectedRep);
+      filteredData = filteredData.filter(item => item.salesRep === selectedRep)
     }
 
-    hot.loadData(filteredData); // Update Handsontable data
-    updateTotalDealsCount(filteredData); // Update total deals display
+    hot.loadData(filteredData) // Update Handsontable data
+    updateTotalDealsCount(filteredData) // Update total deals display
   }
 
   // Event listener for date input
-  const performanceDateInput = document.getElementById('performanceDate');
+  const performanceDateInput = document.getElementById('performanceDate')
   performanceDateInput.addEventListener('change', function () {
-    selectedDate = this.value; // Update selected date
-    filterData(); // Apply filters
-  });
+    selectedDate = this.value // Update selected date
+    filterData() // Apply filters
+  })
 
   // Event listener for sales rep selection using Select2
   $('#performanceRep').on('select2:select', function (e) {
-    selectedRep = e.params.data.id; // Update selected rep
-    filterData(); // Apply filters
-  });
+    selectedRep = e.params.data.id // Update selected rep
+    filterData() // Apply filters
+  })
 
   // Load initial data based on the preselected date and sales rep
-  const initialDate = performanceDateInput.value;
+  const initialDate = performanceDateInput.value
   if (initialDate) {
-    selectedDate = initialDate;
+    selectedDate = initialDate
   }
-  filterData(); // Apply filters initially
+  filterData() // Apply filters initially
 
-  return hot;
+  return hot
 }
 
-
-
-
-
-
-
-function dailyPerformanceDealActions(crmItems) {
-  console.log('crmItems', crmItems);
+function dailyPerformanceDealActions (crmItems) {
+  // console.log('crmItems', crmItems)
 
   // Sample data for second table (rearranging columns and removing unneeded ones)
   const data2 = crmItems.map(item => [
-    item.date,          // Date
-    item.salesRep,      // Sales Rep
-    item.customer,      // Customer
-    item.partner,       // Partner
-    item.action,        // Action
-    item.model,         // Model
-    item.fupUser,       // Fup User
-    item.followUp,      // Follow Up
-    item.fupAction,     // Fup Action
-    item.updated_at     // Updated At
-  ]);
+    item.trnNo, // TRN No
+    item.date, // Date
+    item.salesRep, // Sales Rep
+    item.customer, // Customer
+    item.partner, // Partner
+    item.action, // Action
+    item.model, // Model
+    item.fupUser, // Fup User
+    item.followUp, // Follow Up
+    item.fupAction, // Fup Action
+    item.updated_at // Updated At
+  ])
 
   // Get container for second table
-  const container2 = document.getElementById('table2');
+  const container2 = document.getElementById('table2')
 
   // Initialize Handsontable for the second table with fixed column widths
   const hot2 = new Handsontable(container2, {
     data: data2,
-    rowHeaders: function (row) {
-      return crmItems[row].trnNo;  // Set the trnNo as row header
-    },
+    rowHeaders: false, // Disable row headers
     colHeaders: [
-      'DATE', 'REP', 'CUSTOMER', 'PARTNER', 'ACTION', 'MODEL', 'FUP-USER', 
-      'FUP-DATE', 'FUP ACTION', 'LAST UPDATE'
+      'TRN No',
+      'DATE',
+      'REP',
+      'CUSTOMER',
+      'PARTNER',
+      'ACTION',
+      'MODEL',
+      'FUP-USER',
+      'FUP-DATE',
+      'FUP ACTION',
+      'LAST UPDATE'
     ], // Column headers for selected fields
     columns: [
+      { width: 60 }, // TRN No
       { width: 80 }, // Date
       { width: 80 }, // Sales Rep
       { width: 150 }, // Customer
@@ -3003,77 +3144,77 @@ function dailyPerformanceDealActions(crmItems) {
       { width: 80 }, // Fup User
       { width: 80 }, // Follow Up
       { width: 150 }, // Fup Action
-      { width: 100 }  // Updated At
+      { width: 100 } // Updated At
     ], // Define fixed width for each selected column
     height: '100%',
     width: '100%',
     licenseKey: 'non-commercial-and-evaluation',
     stretchH: 'all',
     fixedColumnsLeft: 2 // Optional: Keep the first two columns fixed while scrolling horizontally
-  });
+  })
 
   // Variables to track selected filters for date and sales rep
-  let selectedDate = null;
-  let selectedRep = null;
+  let selectedDate = null
+  let selectedRep = null
 
   // Function to filter data based on the selected filters
-  function filterData() {
-    let filteredData = crmItems;
+  function filterData () {
+    let filteredData = crmItems
 
     if (selectedDate) {
-      filteredData = filteredData.filter(item => item.date === selectedDate);
+      filteredData = filteredData.filter(item => item.date === selectedDate)
     }
 
     if (selectedRep) {
-      filteredData = filteredData.filter(item => item.salesRep === selectedRep);
+      filteredData = filteredData.filter(item => item.salesRep === selectedRep)
     }
+
+    // console.log('Filtered Data:', filteredData)
 
     // Update Handsontable data with the filtered result
     const filteredDataForTable = filteredData.map(item => [
-      item.date,          // Date
-      item.salesRep,      // Sales Rep
-      item.customer,      // Customer
-      item.partner,       // Partner
-      item.action,        // Action
-      item.model,         // Model
-      item.fupUser,       // Fup User
-      item.followUp,      // Follow Up
-      item.fupAction,     // Fup Action
-      item.updated_at     // Updated At
-    ]);
+      item.id, // TRN No
+      item.date, // Date
+      item.salesRep, // Sales Rep
+      item.customer, // Customer
+      item.partner, // Partner
+      item.action, // Action
+      item.model, // Model
+      item.fupUser, // Fup User
+      item.followUp, // Follow Up
+      item.fupAction, // Fup Action
+      item.updated_at // Updated At
+    ])
 
-    hot2.loadData(filteredDataForTable); // Apply filtered data to the table
+    hot2.loadData(filteredDataForTable) // Apply filtered data to the table
 
     // Calculate the total deal actions (the total number of rows after filtering)
-    const totalDealActions = filteredData.length;
+    const totalDealActions = filteredData.length
 
     // Update the total inside the div
-    document.getElementById('dailyTotalDealActions').innerHTML = totalDealActions;
+    document.getElementById('dailyTotalDealActions').innerHTML =
+      totalDealActions
   }
 
   // Event listener for date input (same as in the first table)
-  const performanceDateInput = document.getElementById('performanceDate');
+  const performanceDateInput = document.getElementById('performanceDate')
   performanceDateInput.addEventListener('change', function () {
-    selectedDate = this.value; // Update selected date
-    filterData(); // Apply filters
-  });
+    selectedDate = this.value // Update selected date
+    filterData() // Apply filters
+  })
 
   // Event listener for sales rep selection (same as in the first table)
   $('#performanceRep').on('select2:select', function (e) {
-    selectedRep = e.params.data.id; // Update selected rep
-    filterData(); // Apply filters
-  });
+    selectedRep = e.params.data.id // Update selected rep
+    filterData() // Apply filters
+  })
 
   // Load initial data based on preselected date and sales rep (if any)
-  const initialDate = performanceDateInput.value;
+  const initialDate = performanceDateInput.value
   if (initialDate) {
-    selectedDate = initialDate;
+    selectedDate = initialDate
   }
-  filterData(); // Apply filters initially
+  filterData() // Apply filters initially
 
-  return hot2;
+  return hot2
 }
-
-
-
-

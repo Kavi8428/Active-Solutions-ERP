@@ -359,7 +359,7 @@ $userLevel = $_SESSION["user_level"];
                             </div>
                             <div class="ms-auto d-flex justify-content-start align-items-center gap-3">
                                 <div class="d-flex justify-content-start align-items-center gap-3 bg-info px-2 rounded-pill" data-bs-toggle="tooltip" data-bs-placement="top" title="Total Deals">
-                                    <div class="text-white"  id="dailyTotalDeal">0</div>
+                                    <div class="text-white" id="dailyTotalDeal">0</div>
                                     <i class="fas fa-handshake"></i>
                                 </div>
                                 <div class="d-flex justify-content-start align-items-center gap-3 bg-success px-2 rounded-pill" data-bs-toggle="tooltip" data-bs-placement="top" title="Total Actions">
@@ -375,13 +375,16 @@ $userLevel = $_SESSION["user_level"];
                         </div>
                     </div>
                     <div id="tab2" class="tab-pane" style="display:none;">
-                        <h4 class="p-2">GP Expectations</h3>
-                            <div id="gpTable"></div>
+                        <div class="d-flex gap-2 justify-content-start align-items-center p-1 bg-light rounded shadow-sm">
+                            <h4 class="mb-0">GP Expectations</h4>
+                            <label class="ms-3 mb-0">Year</label>
+                            <input type="number" id="gpYear" class="form-control w-auto ms-2" value="<?php echo date('Y'); ?>" />
+                        </div>
+                        <div id="gpTable"></div>
 
                     </div>
                     <div id="tab3" class="tab-pane" style="display:none;">
-                        <h2>Calendar Tab</h2>
-                        <p>Check your schedule and upcoming events.</p>
+
                     </div>
                     <div id="tab4" class="tab-pane" style="display:none;">
                         <h2>Settings Tab</h2>
@@ -531,12 +534,12 @@ Eg : American & Efird Lanka (Pvt)Ltd - Customer Sushaan gunasekara - Head of IT 
                         <div class=" row">
                             <div class="col-md-3 mb-3">
                                 <label for="multyTender" class="form-label">Multy-Tender-ID:</label>
-                                <input type="number" class="form-control mt-1" id="multyTender" name="multyTender" min="1" >
+                                <input type="number" class="form-control mt-1" id="multyTender" name="multyTender" min="1">
                                 </input>
                             </div>
                             <div class="col-md-9 mb-3">
                                 <label for="multyTender" class="form-label ">Multy-Tender Description:</label>
-                                <textarea id="multyTenderDescription" class=" form-control form-text  h-25 " disabled ></textarea>
+                                <textarea id="multyTenderDescription" class=" form-control form-text  h-25 " disabled></textarea>
                             </div>
                         </div>
                     </form>
@@ -595,6 +598,8 @@ Eg : American & Efird Lanka (Pvt)Ltd - Customer Sushaan gunasekara - Head of IT 
                                     <option value="Demo">Demo</option>
                                     <option value="Visit">Visit</option>
                                     <option value="Invoice">Invoice</option>
+                                    <option value="Assembling">Assembling</option>
+                                    <option value="Delivering">Delivering</option>
                                     <option value="Complete">Complete</option>
                                 </select>
                             </div>
