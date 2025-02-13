@@ -1643,10 +1643,12 @@ function populateCrmItems (crmItems, crmData) {
 
         // Add event listeners to the cell
         td.addEventListener('mouseover', e => {
-          // Use getSourceDataAtRow instead of getDataAtRow
-          const rowData = instance.getSourceDataAtRow(row)
-          showRowPopup(e, rowData)
-        })
+          const visualRow = instance.toPhysicalRow(row); // Convert to physical index
+          const filteredRowData = instance.getSourceData()[visualRow]; // Get correct row data
+      
+          showRowPopup(e, filteredRowData);
+      });
+      
 
         td.addEventListener('mouseout', hideRowPopup)
       }
@@ -2881,7 +2883,7 @@ function populateDealNumber (crmData) {
 // -------------------------------------------Poplate
 
 function populateGp (crmItems) {
-  console.log( 'populateGp', crmItems )
+  // console.log( 'populateGp', crmItems )
   const gpYearSelect = document.getElementById('gpYear')
 
   function filterDataByYear (year) {
