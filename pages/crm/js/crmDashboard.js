@@ -130,7 +130,6 @@ async function fetchData () {
       populateBrand(brand)
       populateModels(products)
       populateUsers(users)
-      populateDashBoard(crmItems, crmData)
       calculateAndDisplayTotals(crmData)
       populateGp(crmItems)
       populateDealNumber(crmData)
@@ -141,6 +140,7 @@ async function fetchData () {
       setTimeout(() => {
         //  //console.log('Accessing crmData globally:', crmData);
         //  //console.log('Accessing crmItems globally:', crmItems);
+        populateDashBoard(crmItems, crmData)
         populateCrmData(crmData, crmItems, users)
         populateCrmItems(crmItems, crmData, users)
       }, 1000) // Ensures enough time for fetch to complete
@@ -150,7 +150,7 @@ async function fetchData () {
   } finally {
     setTimeout(() => {
       loadingScreen.style.display = 'none'
-    }, 1000)
+    }, 1100)
     // Hide the loading screen
   }
 }
@@ -1096,7 +1096,7 @@ function populateCrmData (crmData, crmItems, users) {
               const selectedRowIndex = selection[0].start.row
               const selectedRowData = hot.getDataAtRow(selectedRowIndex)
               document.getElementById('dealSalesRep').value =
-                selectedRowData[3] || ''
+                userSession || ''
 
               fetch('../../functions/fetchCrmData.php')
                 .then(response => {
@@ -1134,11 +1134,9 @@ function populateCrmData (crmData, crmItems, users) {
         edit_deal: {
           name: '<i class="fa fa-pencil-alt"></i> Edit This Deal',
           callback: function (key, selection) {
-            console.log(userCategory)
-            if (userCategory != 'technical') {
-              const selectedRowIndex = selection[0].start.row
-              const selectedRowData = hot.getDataAtRow(selectedRowIndex)
-
+            const selectedRowIndex = selection[0].start.row
+            const selectedRowData = hot.getDataAtRow(selectedRowIndex)
+            if (userSession == selectedRowData[3] || userLevel == 'admin') {
               // Get the value of the first column (trnNo)
               const selectedTrnNo = selectedRowData[0]
               document.getElementById('dealNo').value = selectedTrnNo || '' // Ensure a fallback value
@@ -1219,10 +1217,11 @@ function populateCrmData (crmData, crmItems, users) {
               Swal.fire({
                 toast: true,
                 icon: 'error',
-                title: 'You are not authorized to edit this deal',
+                title:
+                  'You are not authorized to edit this deal. Contact deal owner or system admin',
                 position: 'top-end',
                 showConfirmButton: false,
-                timer: 3000,
+                timer: 5000,
                 timerProgressBar: true
               })
             }
@@ -1269,10 +1268,10 @@ function populateCrmData (crmData, crmItems, users) {
         remove_stock: {
           name: '<i class="fa fa-trash"></i> Remove This Deal',
           callback: function (key, selection) {
-            if (userCategory != 'technical') {
+           
               const selectedRow = selection[0].start.row // Get the selected row index
               const selectedRowData = hot.getDataAtRow(selectedRow) // Get data of the selected row
-
+            if ( userLevel == 'admin' || userSession == selectedRowData[3]) {
               // Extract the id from the selected row data
               const dealId = selectedRowData[0] // Assuming the 'id' is in the first column
 
@@ -1662,109 +1661,122 @@ function populateCrmItems (crmItems, crmData) {
             const selectedRowIndex = selection[0].start.row
             const selectedRowData = hot.getDataAtRow(selectedRowIndex)
 
-            // Fill out the form with selected row data
-            document.getElementById('id').value = selectedRowData[0]
-            document.getElementById('trnNo').value = selectedRowData[1]
-            document.getElementById('date').value = selectedRowData[2]
-            document.getElementById('action').value = selectedRowData[3]
-            document.getElementById('salesRep').value = selectedRowData[4]
-            document.getElementById('type').value = selectedRowData[5]
-            document.getElementById('media').value = selectedRowData[6]
-            document.getElementById('followup').value = selectedRowData[7]
-            document.getElementById('fupAction').value = selectedRowData[9]
-            document.getElementById('supTicket').value = selectedRowData[14]
-            document.getElementById('gp').value = selectedRowData[15]
-            document.getElementById('gpMonth').value = selectedRowData[16]
+            if (userSession == selectedRowData[4] || userLevel == 'admin') {
+              // Fill out the form with selected row data
+              document.getElementById('id').value = selectedRowData[0]
+              document.getElementById('trnNo').value = selectedRowData[1]
+              document.getElementById('date').value = selectedRowData[2]
+              document.getElementById('action').value = selectedRowData[3]
+              document.getElementById('salesRep').value = selectedRowData[4]
+              document.getElementById('type').value = selectedRowData[5]
+              document.getElementById('media').value = selectedRowData[6]
+              document.getElementById('followup').value = selectedRowData[7]
+              document.getElementById('fupAction').value = selectedRowData[9]
+              document.getElementById('supTicket').value = selectedRowData[14]
+              document.getElementById('gp').value = selectedRowData[15]
+              document.getElementById('gpMonth').value = selectedRowData[16]
 
-            if (
-              selectedRowData[5] == 'Quote' ||
-              selectedRowData[5] == 'Invoice'
-            ) {
-              document.getElementById('gpArea').hidden = false
-            } else {
-              document.getElementById('gpArea').hidden = true
-            }
-
-            // Populate Select2 dropdowns
-            const userValue = selectedRowData[8]
-            const brandValue = selectedRowData[10]
-            const modelValue = selectedRowData[11]
-            const invValue = selectedRowData[12]
-            const quoteValue = selectedRowData[13]
-
-            // Handle Select2 dropdown selection
-            const trimmedUserValue = userValue ? userValue.trim() : 'N/A'
-            if (
-              $('#fup option').filter(function () {
-                return $(this).val().trim() === trimmedUserValue
-              }).length > 0
-            ) {
-              $('#fup').val(trimmedUserValue).trigger('change')
-            }
-
-            const trimmedBrandValue = brandValue ? brandValue.trim() : 'N/A'
-            if (
-              $('#brand option').filter(function () {
-                return $(this).val().trim() === trimmedBrandValue
-              }).length > 0
-            ) {
-              $('#brand').val(trimmedBrandValue).trigger('change')
-            }
-
-            const trimmedModelValue = modelValue ? modelValue.trim() : 'N/A'
-            if (
-              $('#model option').filter(function () {
-                return $(this).val().trim() === trimmedModelValue
-              }).length > 0
-            ) {
-              $('#model').val(trimmedModelValue).trigger('change')
-            }
-
-            document.getElementById('inv').value = invValue
-            document.getElementById('quote').value = quoteValue
-            const previewFrame = document.querySelector(
-              '#filePreviewModal iframe'
-            )
-
-            viewFileBtn.addEventListener('click', async () => {
-              try {
-                const id = selectedRowData[0] // Use the ID from the selected row
-                if (!id) {
-                  alert('No file selected for viewing.')
-                  return
-                }
-
-                const response = await fetch(
-                  `../../functions/fetchCrmFile.php?id=${id}`
-                )
-
-                if (response.ok) {
-                  // Directly set the response URL as the iframe source
-                  previewFrame.src = `../../functions/fetchCrmFile.php?id=${id}`
-                  const childModal = new bootstrap.Modal(
-                    document.getElementById('filePreviewModal')
-                  )
-                  childModal.show()
-                } else {
-                  alert('Unable to fetch the file. Please try again.')
-                  console.error('Fetch response:', await response.text())
-                }
-              } catch (error) {
-                console.error('Error fetching file:', error)
-                alert('An error occurred while fetching the file.')
+              if (
+                selectedRowData[5] == 'Quote' ||
+                selectedRowData[5] == 'Invoice'
+              ) {
+                document.getElementById('gpArea').hidden = false
+              } else {
+                document.getElementById('gpArea').hidden = true
               }
-            })
 
-            detaiTableModal.show()
+              // Populate Select2 dropdowns
+              const userValue = selectedRowData[8]
+              const brandValue = selectedRowData[10]
+              const modelValue = selectedRowData[11]
+              const invValue = selectedRowData[12]
+              const quoteValue = selectedRowData[13]
 
-            var modalElement = document.getElementById('detaiTableModal')
+              // Handle Select2 dropdown selection
+              const trimmedUserValue = userValue ? userValue.trim() : 'N/A'
+              if (
+                $('#fup option').filter(function () {
+                  return $(this).val().trim() === trimmedUserValue
+                }).length > 0
+              ) {
+                $('#fup').val(trimmedUserValue).trigger('change')
+              }
 
-            // Reset the display property and show the modal
-            modalElement.style.display = 'block' // Ensure it's set to block before showing
-            var modalInstance = new bootstrap.Modal(modalElement)
-            modalInstance.show() // Use Bootstrap's modal.show() method
+              const trimmedBrandValue = brandValue ? brandValue.trim() : 'N/A'
+              if (
+                $('#brand option').filter(function () {
+                  return $(this).val().trim() === trimmedBrandValue
+                }).length > 0
+              ) {
+                $('#brand').val(trimmedBrandValue).trigger('change')
+              }
 
-            //console.log("Modal shown.");
+              const trimmedModelValue = modelValue ? modelValue.trim() : 'N/A'
+              if (
+                $('#model option').filter(function () {
+                  return $(this).val().trim() === trimmedModelValue
+                }).length > 0
+              ) {
+                $('#model').val(trimmedModelValue).trigger('change')
+              }
+
+              document.getElementById('inv').value = invValue
+              document.getElementById('quote').value = quoteValue
+              const previewFrame = document.querySelector(
+                '#filePreviewModal iframe'
+              )
+
+              viewFileBtn.addEventListener('click', async () => {
+                try {
+                  const id = selectedRowData[0] // Use the ID from the selected row
+                  if (!id) {
+                    alert('No file selected for viewing.')
+                    return
+                  }
+
+                  const response = await fetch(
+                    `../../functions/fetchCrmFile.php?id=${id}`
+                  )
+
+                  if (response.ok) {
+                    // Directly set the response URL as the iframe source
+                    previewFrame.src = `../../functions/fetchCrmFile.php?id=${id}`
+                    const childModal = new bootstrap.Modal(
+                      document.getElementById('filePreviewModal')
+                    )
+                    childModal.show()
+                  } else {
+                    alert('Unable to fetch the file. Please try again.')
+                    console.error('Fetch response:', await response.text())
+                  }
+                } catch (error) {
+                  console.error('Error fetching file:', error)
+                  alert('An error occurred while fetching the file.')
+                }
+              })
+
+              detaiTableModal.show()
+
+              var modalElement = document.getElementById('detaiTableModal')
+
+              // Reset the display property and show the modal
+              modalElement.style.display = 'block' // Ensure it's set to block before showing
+              var modalInstance = new bootstrap.Modal(modalElement)
+              modalInstance.show() // Use Bootstrap's modal.show() method
+
+              //console.log("Modal shown.");
+            } else {
+              Swal.fire({
+                toast: true,
+                icon: 'error',
+                title:
+                  'You are not authorized to edit this action. Contact action owner or system admin',
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 5000,
+                timerProgressBar: true
+              })
+            }
           }
         },
 
@@ -1774,18 +1786,30 @@ function populateCrmItems (crmItems, crmData) {
             const selectedRow = selection[0].start.row
             // removeData(id, tableName);
             const selectedRowData = hot.getDataAtRow(selectedRow) // Get data of the selected row
+            if (userSession == selectedRowData[4] || userLevel == 'admin') {
+              // Extract the id from the selected row data
+              const dealId = selectedRowData[0] // Assuming the 'id' is in the first column
 
-            // Extract the id from the selected row data
-            const dealId = selectedRowData[0] // Assuming the 'id' is in the first column
+              // Confirm the deletion action
+              if (confirm(`Are you sure you want to remove this Deal`)) {
+                removeData(dealId, 'crmitems')
 
-            // Confirm the deletion action
-            if (confirm(`Are you sure you want to remove this Deal`)) {
-              removeData(dealId, 'crmitems')
+                crmItems.splice(selectedRow, 1)
+                hot.render()
 
-              crmItems.splice(selectedRow, 1)
-              hot.render()
-
-              // Call your removeData function and pass the id
+                // Call your removeData function and pass the id
+              }
+            } else {
+              Swal.fire({
+                toast: true,
+                icon: 'error',
+                title:
+                  'You are not authorized to remove this action. Contact action owner or system admin',
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 5000,
+                timerProgressBar: true
+              })
             }
           }
         },
@@ -2854,47 +2878,59 @@ function populateDealNumber (crmData) {
   })
 }
 
+// -------------------------------------------Poplate
 
-// -------------------------------------------Poplate 
+function populateGp (crmItems) {
+  console.log( 'populateGp', crmItems )
+  const gpYearSelect = document.getElementById('gpYear')
 
-function populateGp(crmItems) {
-  const gpYearSelect = document.getElementById('gpYear');
-
-  function filterDataByYear(year) {
+  function filterDataByYear (year) {
     const filteredData = crmItems.filter(item => {
-      const itemYear = new Date(item.gpMonth).getFullYear();
-      return itemYear === year && (item.type === 'Quote' || item.type === 'Invoice');
-    });
+      const itemYear = new Date(item.gpMonth).getFullYear()
+      return (
+        itemYear === year && (item.type === 'Quote' || item.type === 'Invoice')
+      )
+    })
 
-    const now = new Date();
-    const thisMonth = now.toISOString().slice(0, 7);
+    const now = new Date()
+    const thisMonth = now.toISOString().slice(0, 7)
 
-    const lastMonthDate = new Date(now);
-    lastMonthDate.setMonth(now.getMonth() - 1);
-    const lastMonth = lastMonthDate.toISOString().slice(0, 7);
+    const lastMonthDate = new Date(now)
+    lastMonthDate.setMonth(now.getMonth() - 1)
+    const lastMonth = lastMonthDate.toISOString().slice(0, 7)
 
-    const currentMonthIndex = now.getMonth();
-    const lastMonthIndex = (currentMonthIndex - 1 + 12) % 12;
+    const currentMonthIndex = now.getMonth()
+    const lastMonthIndex = (currentMonthIndex - 1 + 12) % 12
 
     const allMonths = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
+    ]
 
     const otherMonthsHeaders = allMonths.filter((month, index) => {
-      return index !== currentMonthIndex && index !== lastMonthIndex;
-    });
+      return index !== currentMonthIndex && index !== lastMonthIndex
+    })
 
     const mapData = filteredData.map(item => {
-      let thisMonthGp = item.gpMonth === thisMonth ? item.gp : 0;
-      let lastMonthGp = item.gpMonth === lastMonth ? item.gp : 0;
+      let thisMonthGp = item.gpMonth === thisMonth ? item.gp : 0
+      let lastMonthGp = item.gpMonth === lastMonth ? item.gp : 0
 
-      const otherMonthsData = otherMonthsHeaders.map(month => {
-        const monthIndex = allMonths.indexOf(month);
-        let computedDate = new Date(year, monthIndex);
-        const monthYear = computedDate.toISOString().slice(0, 7);
-        return item.gpMonth === monthYear ? item.gp : 0;
-      });
+      const otherMonthsData = otherMonthsHeaders.map((month, index) => {
+        const monthIndex = allMonths.indexOf(month)
+        const monthYear = `${year}-${String(monthIndex + 1).padStart(2, '0')}` // Ensure correct format YYYY-MM
+
+        return item.gpMonth === monthYear ? item.gp : 0
+      })
 
       return [
         item.salesRep.charAt(0).toUpperCase() + item.salesRep.slice(1),
@@ -2903,17 +2939,17 @@ function populateGp(crmItems) {
         thisMonthGp,
         lastMonthGp,
         ...otherMonthsData
-      ];
-    });
+      ]
+    })
 
     // Calculate totals for each month
     const monthlyTotals = mapData.reduce((totals, row) => {
       // Start from index 3 since first 3 columns are REP, PARTNER, END-CUST
       for (let i = 3; i < row.length; i++) {
-        totals[i] = (totals[i] || 0) + Number(row[i]);
+        totals[i] = (totals[i] || 0) + Number(row[i])
       }
-      return totals;
-    }, []);
+      return totals
+    }, [])
 
     // Create total row with proper formatting
     const totalRow = [
@@ -2921,10 +2957,10 @@ function populateGp(crmItems) {
       '',
       '',
       ...monthlyTotals.slice(3).map(total => Number(total.toFixed(2)))
-    ];
+    ]
 
     // Add total row to the data
-    mapData.push(totalRow);
+    mapData.push(totalRow)
 
     const headers = [
       'REP',
@@ -2933,41 +2969,51 @@ function populateGp(crmItems) {
       'THIS MONTH',
       'LAST MONTH',
       ...otherMonthsHeaders
-    ];
+    ]
 
-    function customRenderer(instance, td, row, col, prop, value, cellProperties) {
-      const defaultRenderer = Handsontable.renderers.getRenderer(cellProperties.type) || Handsontable.renderers.TextRenderer;
-      defaultRenderer.apply(this, arguments);
+    function customRenderer (
+      instance,
+      td,
+      row,
+      col,
+      prop,
+      value,
+      cellProperties
+    ) {
+      const defaultRenderer =
+        Handsontable.renderers.getRenderer(cellProperties.type) ||
+        Handsontable.renderers.TextRenderer
+      defaultRenderer.apply(this, arguments)
 
-      const rowData = instance.getDataAtRow(row);
-      const isLastRow = row === instance.countRows() - 1;
+      const rowData = instance.getDataAtRow(row)
+      const isLastRow = row === instance.countRows() - 1
 
       if (isLastRow) {
         // Styling for total row
-        td.style.backgroundColor = '#E3F2FD';
-        td.style.fontWeight = 'bold';
-        return td;
+        td.style.backgroundColor = '#E3F2FD'
+        td.style.fontWeight = 'bold'
+        return td
       }
 
-      const monthData = rowData.slice(3);
-      const hasAnyGP = monthData.some(val => Number(val) !== 0);
+      const monthData = rowData.slice(3)
+      const hasAnyGP = monthData.some(val => Number(val) !== 0)
 
       if (!hasAnyGP) {
-        td.style.backgroundColor = '#FFCDD2';
+        td.style.backgroundColor = '#FFCDD2'
       } else {
         if (col === 3 && Number(rowData[3]) !== 0) {
-          td.style.backgroundColor = '#B3E5FC';
+          td.style.backgroundColor = '#B3E5FC'
         } else if (col === 4 && Number(rowData[4]) !== 0) {
-          td.style.backgroundColor = '#C8E6C9';
+          td.style.backgroundColor = '#C8E6C9'
         } else {
-          td.style.backgroundColor = '';
+          td.style.backgroundColor = ''
         }
       }
 
-      return td;
+      return td
     }
 
-    const container = document.querySelector('#gpTable');
+    const container = document.querySelector('#gpTable')
 
     const hot = new Handsontable(container, {
       data: mapData,
@@ -3010,23 +3056,23 @@ function populateGp(crmItems) {
         })
       ],
       cells: function (row, col, prop) {
-        const cellProperties = {};
-        cellProperties.renderer = customRenderer;
-        return cellProperties;
+        const cellProperties = {}
+        cellProperties.renderer = customRenderer
+        return cellProperties
       },
       fixedColumnsStart: 3,
       manualColumnResize: true,
       manualRowResize: true
-    });
+    })
   }
 
-  const currentYear = new Date().getFullYear();
-  filterDataByYear(currentYear);
+  const currentYear = new Date().getFullYear()
+  filterDataByYear(currentYear)
 
   gpYearSelect.addEventListener('change', function () {
-    const selectedYear = parseInt(this.value, 10);
-    filterDataByYear(selectedYear);
-  });
+    const selectedYear = parseInt(this.value, 10)
+    filterDataByYear(selectedYear)
+  })
 }
 //-------------------------------------------------- daily performance report---------------------------------
 
