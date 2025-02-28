@@ -8,7 +8,13 @@ const fetchProductDetails = async () => {
   return data
 }
 
+console.log('fetchProductDetails:',fetchProductDetails())
+
 function fetchMasterInvoice () {
+
+  const loadingScreen = document.getElementById('loadingScreen')
+  loadingScreen.style.display = 'flex'
+
   fetch('../../functions/fetchMasterInv.php')
     .then(response => {
       if (!response.ok) {
@@ -20,6 +26,8 @@ function fetchMasterInvoice () {
       const filteredInvoices = data.filter(
         invoice => !invoice.gin && !invoice.grn
       )
+
+      
 
       // Fetch product details
       return Promise.all([filteredInvoices, fetchProductDetails()])
@@ -34,15 +42,16 @@ function fetchMasterInvoice () {
           category: product.category
         }
       })
-      // console.log('products:', products);
+      console.log('products:', products);
 
       filteredInvoices.forEach(x => {
-        const product = products.find(p => p.itemCode === x.itemCode)
+        const product = products.find(p => p.itemCode.trim() === x.itemCode.trim())
         if (product) {
           fetchedDate.push(x.date) // Consider pushing just x.date
           invoiceData.push({
             date: x.date,
             invoice: x.inv,
+            brand : product.brand,
             customer: x.customer,
             category: product.category,
             value: parseFloat(x.value),
@@ -61,6 +70,7 @@ function fetchMasterInvoice () {
             invoice: x.inv,
             customer: x.customer,
             category: '',
+            brand: x.brand,
             value: parseFloat(x.value),
             vat: parseFloat(x.vat),
             other: parseFloat(x.others || 0),
@@ -69,25 +79,39 @@ function fetchMasterInvoice () {
               parseFloat(x.vat) +
               parseFloat(x.others || 0)
           })
-        //   console.log('product not found for itemCode:', x.itemCode)
+          console.log('product not found for itemCode:', x.itemCode)
         }
       })
 
-      displayInvoices(invoiceData)
-      populateFilters()
-      populateCusData(filteredInvoices)
-      populateCusGpData(filteredInvoices)
-      populateRepSalesData(filteredInvoices)
-      populateRepGpData(filteredInvoices)
-      populatepProSaleData(filteredInvoices)
-      populatepProGpData(filteredInvoices)
-      populateOverView(filteredInvoices)
-      displayChart(filteredInvoices)
+
+
+      setTimeout(() => {
+
+        displayInvoices(invoiceData)
+        populateFilters()
+        populateCusData(filteredInvoices)
+        populateCusGpData(filteredInvoices)
+        populateRepSalesData(filteredInvoices)
+        populateRepGpData(filteredInvoices)
+        populatepProSaleData(filteredInvoices)
+        populatepProGpData(filteredInvoices)
+        populateOverView(filteredInvoices)
+        displayChart(filteredInvoices)
+    
+        loadingScreen.style.display = 'none'
+      }, 1000)
+
+
+
+
     })
     .catch(error => {
       console.error('Error fetching master invoice', error)
     })
 }
+
+
+
 
 function displayChart (response) {
   const currentDate = new Date()
@@ -392,13 +416,13 @@ function displayInvoices (data) {
   })
 
   data.forEach(invoice => {
-    // console.log('invoice', invoice);
+    console.log('invoice', invoice);
     const row = document.createElement('tr')
     row.innerHTML = `
             <td>${formatDate(invoice.date)}</td>
             <td>${invoice.invoice}</td>
             <td>${invoice.customer}</td>
-            <td>${invoice.category}</td>
+            <td>${invoice.brand}</td>
             <td>${formatter.format(invoice.value)}</td>
             <td>${formatter.format(invoice.vat)}</td>
             <td>${formatter.format(invoice.other)}</td>
@@ -2809,6 +2833,11 @@ function overViewChart (data) {
 function exportToExcel () {
   // Add export functionality here
 }
+
+
+
+// ------------------------------Month Filter--------------------------
+
 $(document).ready(function () {
   $('#monthFilter').datepicker({
     format: 'mm-yyyy',
@@ -2826,9 +2855,36 @@ $(document).ready(function () {
   populateFilters()
 })
 
+
+// ---------------------------------------Last Page Btn-----------------------------------
+
 // Initialize on page load
-document.addEventListener('DOMContentLoaded', initializeTable)
 
 document.getElementById('back').addEventListener('click', () => {
   window.history.back()
 })
+
+
+
+// ------------------------------------------Load Last visted tab-----------------------------
+
+
+document.addEventListener("DOMContentLoaded", async function() {
+
+
+  await fetchMasterInvoice();
+  var lastTab = localStorage.getItem('lastTab');
+  if (lastTab) {
+      var triggerEl = document.querySelector(`#myTab button[data-bs-target="${lastTab}"]`);
+      var tab = new bootstrap.Tab(triggerEl);
+      tab.show();
+  }
+
+  var tabButtons = document.querySelectorAll('#myTab button');
+  tabButtons.forEach(function(button) {
+      button.addEventListener('shown.bs.tab', function(event) {
+          var target = event.target.getAttribute('data-bs-target');
+          localStorage.setItem('lastTab', target);
+      });
+  });
+});

@@ -30,7 +30,7 @@ if (!isset($_SESSION["user"])) {
         MASTER INVOICE
     </title>
 
-    <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <!-- Material Icons -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     <!-- CSS Files -->
@@ -43,6 +43,8 @@ if (!isset($_SESSION["user"])) {
     <!-- Then load xlsx library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
     <link href="../../pages/dashboards/css/invoice.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 
 
@@ -64,7 +66,7 @@ if (!isset($_SESSION["user"])) {
                     <ol class="breadcrumb mb-0">
                         <li class="breadcrumb-item">
                             <a href="../../dashboard.php" class="text-decoration-none">
-                                <i class="fas fa-home"></i>
+                                <i class="fa fa-home" aria-hidden="true"></i>
                             </a>
                         </li>
                         <li class="breadcrumb-item">

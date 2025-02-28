@@ -988,3 +988,140 @@ function populateCusEmployee (customer, selectedEmployee) {
     }
   })
 }
+
+
+document.getElementById('fileInput').addEventListener('change', function (e) {
+  const file = e.target.files[0];
+
+  if (file) {
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+
+      let invoiceData = [];
+
+      workbook.SheetNames.forEach(sheetName => {
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        jsonData.forEach(element => {
+          if (element.Date) {
+            element.Date = convertExcelDate(element.Date);
+          }
+
+          if (element.Memo) {
+            const serials = element.Memo.match(/S\/N\s*:\s*([A-Z0-9\s]+)/i);
+            element.Serials = serials && serials[1] ? serials[1].split(/\s+/).filter(Boolean) : [];
+          }
+
+          if (element.Item) {
+            const itemMatch = element.Item.match(/:(.*?)\s*\(/);
+            element.ItemCode = itemMatch && itemMatch[1] ? itemMatch[1] : (element.Item.match(/^(.*?)\s*\(/) || [])[1] || element.Item;
+          }
+
+          if (element.Item) {
+            const brandMatch = element.Item.match(/^(.*?):/);
+            element.Brand = brandMatch ? brandMatch[1] : '';
+          }
+        });
+
+        let filteredData = jsonData.filter(x => x.Num && x.Num !== '');
+
+        invoiceData = filteredData.map(item => {
+          let rep;
+          if (item.Rep == 'AS') rep = 'Shaheer';
+          else if (item.Rep == 'AD') rep = 'amal';
+          else if (item.Rep == 'A') rep = 'Anjana';
+          else if (item.Rep == 'AR') rep = 'Arkam';
+          else if (item.Rep == 'AM') rep = 'amasha';
+          else if (item.Rep == 'H') rep = 'hiruni';
+          else if (item.Rep == 'SM') rep = 'shammi';
+          else{
+            rep = item.Rep;
+          }
+
+          return {
+            inv: item.Num,
+            customer: item.Name || '',
+            inv_date: item.Date || '',
+            po_num: item['P. O. #'] || '',
+            rep: rep || '',
+            terms: item.Terms || '',
+            shipping_date: item.Date || '',
+            vat: item.VAT || '',
+            discountValue: item.Discount || '',
+            discountStatus: item.DiscountStatus || '',
+            cusEmployee: item.CusEmployee || '',
+            object: item.Object || 'sale',
+            status: item.Type || '',
+            inventory: item.Inventory || '1',
+            lInvNo: item.LInvNo || '',
+            invoiceItems: {
+              item_code: item.ItemCode || '',
+              qt: item.Qty || '',
+              serials: item.Serials.toString() || '',
+              description: item.Memo || '',
+              unit_price: item['Sales Price'] || '',
+              total: item.Amount || '',
+              vat: item.VAT || '',
+              warranty: item.Warranty || '',
+              gp: item.GP || ''
+            }
+          };
+        });
+
+        // **Capture start time**
+        const startTime = performance.now();
+
+        // **SEND DATA TO BACKEND USING FETCH**
+        fetch('../../functions/insertImportInvoice.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(invoiceData)
+        })
+          .then(response => response.json())
+          .then(data => {
+            // **Capture end time**
+            const endTime = performance.now();
+            const uploadTime = Math.round(endTime - startTime); // Calculate actual upload time in ms
+
+            // Update UI dynamically based on upload time
+            document.getElementById('uploadText').textContent = 'Uploading...';
+            document.getElementById('uploadText').classList.add('text-danger', 'animate__animated', 'animate__flash');
+
+            setTimeout(() => {
+              document.getElementById('uploadText').textContent = 'Uploaded';
+              document.getElementById('uploadText').classList.replace('text-danger', 'text-success');
+            }, uploadTime);
+
+            location.reload(); // Reload the page after successful upload
+          })
+          .catch(error => {
+            console.error('Error:', error);
+          });
+      });
+    };
+
+    reader.readAsArrayBuffer(file);
+  }
+});
+
+
+
+function convertExcelDate (excelDate) {
+  if (!excelDate || isNaN(excelDate)) {
+    return null
+  }
+  const excelEpoch = new Date(1899, 11, 30)
+  const date = new Date(excelEpoch.getTime() + excelDate * 86400000)
+
+  // Convert to Sri Lankan time (UTC+5:30)
+  const sriLankanOffset = 5.5 * 60 * 60 * 1000
+  const sriLankanDate = new Date(date.getTime() + sriLankanOffset)
+
+  return sriLankanDate.toISOString().split('T')[0]
+}

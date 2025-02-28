@@ -517,7 +517,7 @@ if ($result->num_rows > 0) {
         echo '<td class="text-sm font-weight-normal">' . $row["full_name"] . '</td>';
        
         echo '<td class="text-sm font-weight-normal">' . $row["user_level"] . '</td>';
-        if ($_SESSION["user_level"] === "admin") {
+        if ($_SESSION["user_level"] === "manager") {
         echo '<td class="text-sm font-weight-normal">
                 <a href="../pages/users/edit_user.php?id=' . $row["id"] . '" class="btn">
                     <i class="material-icons text-secondary position-relative text-lg">drive_file_rename_outline</i>

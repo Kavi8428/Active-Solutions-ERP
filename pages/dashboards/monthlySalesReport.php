@@ -11,28 +11,34 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@12.1.0/dist/handsontable.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
-    <link rel="stylesheet" href="./css/monthlySalesReport.css">
-    <style>
-        .chart-container {
-            max-width: 720px;
-            margin: 2rem auto;
+    <scrip src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js">
+        </script>
+        <link rel="stylesheet" href="./css/monthlySalesReport.css">
+        <style>
+            .chart-container {
+                max-width: 720px;
+                margin: 2rem auto;
 
-        }
+            }
 
-        .center-text {
-            position: absolute;
-            top: 40%;
-            left: 50%;
-            color: white;
-            transform: translate(-50%, -50%);
-            font-size: 24px;
-            font-weight: bold;
-        }
-    </style>
+            .center-text {
+                position: absolute;
+                top: 40%;
+                left: 50%;
+                color: white;
+                transform: translate(-50%, -50%);
+                font-size: 24px;
+                font-weight: bold;
+            }
+        </style>
 </head>
 
 <body class="bg-light">
+    <div id="loadingScreen" class="loading-overlay">
+        <div class="loader"></div>
+
+        <div class="loading-text">Loading...</div>
+    </div>
     <div class="container-fluid ">
         <div class="d-flex flex-md-row align-items-center ">
             <i class="fa fa-arrow-circle-left me-3 " id="back" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="BACK"></i>
@@ -41,7 +47,7 @@
             <!-- Tabs -->
             <ul class="nav nav-tabs" id="myTab" role="tablist">
                 <li class="nav-item" role="presentation" data-bs-toggle="tooltip" data-bs-placement="top" title="By clicking this can see the summery view of  top managers, top cstomers, top categories for the current year.">
-                    <button class="nav-link active" id="summary-tab" data-bs-toggle="tab" data-bs-target="#charts" type="button" role="tab">
+                    <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#charts" type="button" role="tab">
                         <i class="fa fa-pie-chart " aria-hidden="true"></i>
                         </i>
                     </button>
@@ -92,11 +98,15 @@
                     </button>
                 </li>
             </ul>
+            <script>
+
+            </script>
+
         </div>
         <!-- Tab Content -->
         <div class="tab-content" id="myTabContent">
             <!-- Summary Tab -->
-            <section class="tab-pane fade show active" id="charts" role="tabpanel">
+            <section class="tab-pane fade" id="charts" role="tabpanel">
                 <!-- Summary Cards -->
                 <div class="card">
                     <div class="card-body">
@@ -376,7 +386,7 @@
                         </div>
 
                         <div id="repSalesTable"></div>
-                        <div style="background : #cedfdf" >
+                        <div style="background : #cedfdf">
                             <h4 class="mt-4 p-2">Graphical View</h4>
                             <div class="chart-container">
                                 <canvas id="repSalesChart"></canvas>

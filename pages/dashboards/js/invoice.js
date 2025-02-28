@@ -35,54 +35,131 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   })
 })
-
 document.getElementById('fileInput').addEventListener('change', function (e) {
-  const file = e.target.files[0]
+  const file = e.target.files[0];
 
   if (file) {
-    const reader = new FileReader()
+    const reader = new FileReader();
 
     reader.onload = function (e) {
-      const data = new Uint8Array(e.target.result)
-      const workbook = XLSX.read(data, {
-        type: 'array'
-      })
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+
+      let invoiceData = [];
 
       workbook.SheetNames.forEach(sheetName => {
-        const worksheet = workbook.Sheets[sheetName]
-        const jsonData = XLSX.utils.sheet_to_json(worksheet)
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-        //  console.log('jsonData', jsonData);
-
-        const mapData = jsonData.map(element => {
-          return {
-            inv: element.Num || '', // Default to an empty string if the value is missing
-            customer: element.Name || '',
-            itemCode: element.Model || '',
-            item: element.Model || '',
-            itemDescription: element['Item Description'] || '',
-            brand: element.Brand || '',
-            serial: '',
-            value: element.Amount || 0, // Default to 0 if missing
-            qty: element.Qty || 0, // Default to 0 if missing
-            object: '',
-            warranty: element.Warranty || ' ', // Ensure `element.Warranty` exists or set default
-            date: element.Date ? convertExcelDate(element.Date) : '', // Convert if Date exists
-            memo: element.Memo || '',
-            rep: element.Rep || '',
-            vat: element['VAT Amout'] || 0, // Default to 0 if missing
-            gp: element['" GP "'] || 0 // Default to 0 if missing
+        jsonData.forEach(element => {
+          if (element.Date) {
+            element.Date = convertExcelDate(element.Date);
           }
+
+          if (element.Memo) {
+            const serials = element.Memo.match(/S\/N\s*:\s*([A-Z0-9\s]+)/i);
+            element.Serials = serials && serials[1] ? serials[1].split(/\s+/).filter(Boolean) : [];
+          }
+
+          if (element.Item) {
+            const itemMatch = element.Item.match(/:(.*?)\s*\(/);
+            element.ItemCode = itemMatch && itemMatch[1] ? itemMatch[1] : (element.Item.match(/^(.*?)\s*\(/) || [])[1] || element.Item;
+          }
+
+          if (element.Item) {
+            const brandMatch = element.Item.match(/^(.*?):/);
+            element.Brand = brandMatch ? brandMatch[1] : '';
+          }
+        });
+
+        let filteredData = jsonData.filter(x => x.Num && x.Num !== '');
+
+        invoiceData = filteredData.map(item => {
+          let rep;
+          if (item.Rep == 'AS') rep = 'Shaheer';
+          else if (item.Rep == 'AD') rep = 'Amal';
+          else if (item.Rep == 'A') rep = 'Anjana';
+
+          return {
+            inv: item.Num,
+            customer: item.Name || '',
+            inv_date: item.Date || '',
+            po_num: item['P. O. #'] || '',
+            rep: rep || '',
+            terms: item.Terms || '',
+            shipping_date: item.Date || '',
+            vat: item.VAT || '',
+            discountValue: item.Discount || '',
+            discountStatus: item.DiscountStatus || '',
+            cusEmployee: item.CusEmployee || '',
+            object: item.Object || 'sale',
+            status: item.Type || '',
+            inventory: item.Inventory || '1',
+            lInvNo: item.LInvNo || '',
+            invoiceItems: {
+              item_code: item.ItemCode || '',
+              qt: item.Qty || '',
+              serials: item.Serials.toString() || '',
+              description: item.Memo || '',
+              unit_price: item['Sales Price'] || '',
+              total: item.Amount || '',
+              vat: item.VAT || '',
+              warranty: item.Warranty || '',
+              gp: item.GP || ''
+            }
+          };
+        });
+
+        // console.log('invoiceData', invoiceData); // Debugging
+
+        // **SEND DATA TO BACKEND USING FETCH**
+        fetch('../../functions/insertImportInvoice.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(invoiceData)
         })
+          .then(response => response.json())
+          .then(data => {
+            console.log('Success:', data);
+            // alert('Data sent successfully!');
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            // alert('Failed to send data.');
+          });
+      });
+    };
 
-        //console.log('mapData', mapData);
-        updateMasterInv(mapData)
-      })
-    }
+    // const mapData = jsonData.map(element => {
+        //   return {
+        //     inv: element.Num || '', // Default to an empty string if the value is missing
+        //     customer: element.Name || '',
+        //     itemCode: element.Model || '',
+        //     item: element.Model || '',
+        //     itemDescription: element['Item Description'] || '',
+        //     brand: element.Brand || '',
+        //     serial: '',
+        //     value: element.Amount || 0, // Default to 0 if missing
+        //     qty: element.Qty || 0, // Default to 0 if missing
+        //     object: '',
+        //     warranty: element.Warranty || ' ', // Ensure `element.Warranty` exists or set default
+        //     date: element.Date ? convertExcelDate(element.Date) : '', // Convert if Date exists
+        //     memo: element.Memo || '',
+        //     rep: element.Rep || '',
+        //     vat: element['VAT Amout'] || 0, // Default to 0 if missing
+        //     gp: element['" GP "'] || 0 // Default to 0 if missing
+        //   }
+        // })
 
-    reader.readAsArrayBuffer(file)
+        // console.log('mapData', mapData);
+        // updateMasterInv(mapData)
+
+    reader.readAsArrayBuffer(file);
   }
-})
+});
+
 
 function masterFileFilter (jsonData) {
   const summaryData = {}
@@ -290,9 +367,13 @@ function convertExcelDate (excelDate) {
     return null
   }
   const excelEpoch = new Date(1899, 11, 30)
-  return new Date(excelEpoch.getTime() + excelDate * 86400000)
-    .toISOString()
-    .split('T')[0]
+  const date = new Date(excelEpoch.getTime() + excelDate * 86400000)
+
+  // Convert to Sri Lankan time (UTC+5:30)
+  const sriLankanOffset = 5.5 * 60 * 60 * 1000
+  const sriLankanDate = new Date(date.getTime() + sriLankanOffset)
+
+  return sriLankanDate.toISOString().split('T')[0]
 }
 
 const container = document.getElementById('hot')
@@ -496,7 +577,7 @@ document.addEventListener('DOMContentLoaded', function () {
     stretchH: 'all',
     filters: true,
     dropdownMenu: true,
-    columnSorting : true,
+    columnSorting: true,
     // Fix the headers
     contextMenu: {
       items: {
@@ -509,9 +590,9 @@ document.addEventListener('DOMContentLoaded', function () {
               const selectedRow = selection[0].start.row // Get selected row index
               const columnHeader = hot.getColHeader(selectedColumn) // Get column header
               const cellContent = hot.getDataAtCell(selectedRow, selectedColumn) // Get cell content
-              const invCellContent = hot.getDataAtCell(selectedRow, 0);
+              const invCellContent = hot.getDataAtCell(selectedRow, 0)
 
-                if (cellContent && cellContent != "null") {
+              if (cellContent && cellContent != 'null') {
                 if (columnHeader == 'INV') {
                   window.location.href = `../../pages/dashboards/invoice_new.php?id=${cellContent}`
                 } else if (columnHeader == 'GRN') {
@@ -520,8 +601,12 @@ document.addEventListener('DOMContentLoaded', function () {
                   window.location.href = `../../pages/dashboards/gin.php?id=${cellContent}`
                 }
               } else {
-                console.log('The field is empty');
-                if(confirm(`Fool...! You cannot see the details of empty columns. It's ok, You can add new ${columnHeader} to this invoice number. Continue..?`)){
+                console.log('The field is empty')
+                if (
+                  confirm(
+                    `Fool...! You cannot view the details of empty columns. It's ok, You can add new ${columnHeader} to this invoice number. Continue..?`
+                  )
+                ) {
                   if (columnHeader == 'INV') {
                     window.location.href = `../../pages/dashboards/invoice_new.php?invNo=${invCellContent}`
                   } else if (columnHeader == 'GRN') {
@@ -532,26 +617,51 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
               }
             } else {
-              console.error('No selection available.');
+              console.error('No selection available.')
             }
           }
-        },
-        row_above: {
-          name: 'Insert row above'
-        },
-        row_below: {
-          name: 'Insert row below'
         },
         remove_row: {
           name: 'Remove row',
           callback: function (key, selection) {
-            const selectedRow = selection[0].start.row
-            const confirmation = confirm(
-              `Are you sure you want to remove row ${selectedRow + 1}?`
-            )
-            if (confirmation) {
-              const removedData = hot.getSourceDataAtRow(selectedRow)
-              deleteRow(selectedRow, removedData)
+            if (selection && selection.length > 0) {
+              const selectedRow = selection[0].start.row
+              const removedData = hot.getSourceDataAtRow(selectedRow) // Get row data before deletion
+
+              if (!removedData || !removedData.id) {
+                console.error('Invalid row data:', removedData)
+                Swal.fire(
+                  'Error!',
+                  'Failed to fetch row data before deletion.',
+                  'error'
+                )
+                return
+              }
+
+              Swal.fire({
+                title: 'Are you sure?',
+                text: `Are you sure you want to remove row ${selectedRow + 1}?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'No, keep it'
+              }).then(result => {
+                if (result.isConfirmed) {
+                  deleteRow(selectedRow, removedData) // Delete from DB first
+                  hot.alter('remove_row', selectedRow) // Then remove from UI
+
+                  Swal.fire({
+                    icon: 'success',
+                    title: 'Deleted!',
+                    text: 'The row has been removed.',
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'bottom'
+                  })
+                }
+              })
+            } else {
+              console.error('No row selected.')
             }
           }
         }
@@ -617,6 +727,7 @@ document.addEventListener('DOMContentLoaded', function () {
     afterRemoveRow: function (index, amount, physicalRows) {
       const removedData = physicalRows.map(row => hot.getSourceDataAtRow(row))
       console.log('Rows removed:', removedData)
+
       // No need to handle deletion here since it's handled in the context menu callback
     },
     afterRender: function () {
@@ -725,26 +836,48 @@ document.addEventListener('DOMContentLoaded', function () {
       formData.append(key, value)
     })
 
-    fetch('../../functions/updateMasterInv.php', {
-      method: 'POST',
-      body: formData
+    Swal.fire({
+      icon: 'info',
+      title: 'Edit Data',
+      text: 'You cannot edit data here. To Edit,   Right-click the INV/GRN/GIN of the data and click "View Details" to edit the data.',
+      toast: true,
+      showConfirmButton: false,
+      position: 'bottom'
     })
-      .then(response => response.text())
-      .then(data => {
-        //console.log('Response:', data);
-        setTimeout(() => {
-          fetch('../../functions/fetchMasterInv.php')
-            .then(response => response.json())
-            .then(data => {
-              data.sort((a, b) => new Date(b.date) - new Date(a.date))
-              hot.loadData(data)
-            })
-            .catch(error => console.error('Error fetching data:', error))
-        }, 1000)
-      })
-      .catch(error => {
-        console.error('Error saving data:', error)
-      })
+
+    // fetch('../../functions/updateMasterInv.php', {
+    //   method: 'POST',
+    //   body: formData
+    // })
+    //   .then(response => response.json())
+    //   .then(data => {
+    //   if (data.messages && data.messages.length > 0) {
+    //     console.log('data', data);
+    //     setTimeout(() => {
+    //     Swal.fire({
+    //       title: 'Success',
+    //       text: data.messages.join(', '),
+    //       icon: 'success',
+    //       toast: true,
+    //       showConfirmButton: false,
+    //       position: 'bottom'
+    //     });
+    //     }, 1000);
+    //   } else {
+    //     throw new Error('Unexpected response format');
+    //   }
+    //   })
+    //   .catch(error => {
+    //   console.error('Error saving data:', error);
+    //   Swal.fire({
+    //     title: 'Error',
+    //     text: 'Failed to save data. Please try again.',
+    //     icon: 'error',
+    //     toast: true,
+    //     showConfirmButton: false,
+    //     position: 'bottom'
+    //   });
+    //   });
   }
 
   function deleteRow (row, rowData) {
