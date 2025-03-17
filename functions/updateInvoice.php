@@ -103,10 +103,11 @@ if ($data && isset($data['generalData']) && isset($data['invItems']) && isset($d
         $vatValue = $item['VAT'];
         $gp = $item['GP'];
         $warranty = $item['WARRANTY'];
+        $itemId = $item['ID'];
         
 
         // Check if the item already exists for this invoice number
-        $itemCheckQuery = "SELECT * FROM invoice_items WHERE inv_no = '$id' AND item_code = '$itemCode' AND serials = '$serials' ";
+        $itemCheckQuery = "SELECT * FROM invoice_items WHERE id = '$itemId' ";
         $itemResult = $conn->query($itemCheckQuery);
 
         if ($itemResult === false) {
@@ -116,8 +117,8 @@ if ($data && isset($data['generalData']) && isset($data['invItems']) && isset($d
         if ($itemResult->num_rows > 0) {
             // Item exists, so update it
             $itemUpdateQuery = "UPDATE invoice_items 
-                                SET qt = '$quantity', serials = '$serials', description = '$description', unit_price = '$unitPrice', total = '$total', vat = '$vatValue', gp = '$gp', warranty = '$warranty'
-                                WHERE inv_no = '$id' AND item_code = '$itemCode'";
+                                SET item_code = '$itemCode', qt = '$quantity', serials = '$serials', description = '$description', unit_price = '$unitPrice', total = '$total', vat = '$vatValue', gp = '$gp', warranty = '$warranty'
+                                WHERE id = '$itemId'";
 
             if ($conn->query($itemUpdateQuery) !== TRUE) {
                 jsonError('Error updating invoice item: ' . $conn->error);
@@ -133,20 +134,25 @@ if ($data && isset($data['generalData']) && isset($data['invItems']) && isset($d
         }
     }
 
-    foreach ($removedRows as $removedItem) {
-        $itemCode = $removedItem[0];  // ITEM (column index 0)
-        $quantity = $removedItem[1];  // QUANTITY (column index 1)
-        $serials = $removedItem[2];   // SERIALS (column index 2)
-        $description = $removedItem[3];   // Description (column index 3)
-        $unitPrice = $removedItem[4];   // U price (column index 4)
-        $total = $removedItem[5];   // total (column index 5)
+    if (!empty($removedRows)) {
+        foreach ($removedRows as $removedItem) {
+            $itemCode = $removedItem[0];  // ITEM (column index 0)
+            $quantity = $removedItem[1];  // QUANTITY (column index 1)
+            $serials = $removedItem[2];   // SERIALS (column index 2)
+            $description = $removedItem[3];   // Description (column index 3)
+            $unitPrice = $removedItem[4];   // U price (column index 4)
+            $total = $removedItem[5];   // total (column index 5)
+            $removeId = $removedItem[10];  // ID (column index 6)
 
-        // SQL query to delete the item from invoice_items table
-        $deleteQuery = "DELETE FROM invoice_items WHERE inv_no = '$id' AND item_code = '$itemCode' AND serials = '$serials' AND description = '$description' AND unit_price = '$unitPrice'  AND total = '$total'";
+            // SQL query to delete the item from invoice_items table
+            $deleteQuery = "DELETE FROM invoice_items WHERE id = '$removeId'";
 
-        if ($conn->query($deleteQuery) !== TRUE) {
-            jsonError('Error deleting invoice item: ' . $conn->error);
+            if ($conn->query($deleteQuery) !== TRUE) {
+                jsonError('Error deleting invoice item: ' . $conn->error);
+            }
         }
+    }else{
+        jsonError('Error deleting invoice item: removedRows is empty');
     }
 
     $conn->close();

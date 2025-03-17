@@ -26,13 +26,15 @@ async function fetchData () {
     if (!crmItemsResponse.ok) throw new Error('Error while fetching CRM Items')
     const fetchedCrmItems = await crmItemsResponse.json()
 
-    // Get the last item and log its id
+    await Promise.all([minLoadingTime, crmDataResponse, crmItemsResponse])
+
+    // // Get the last item and log its id
     const lastItemId = fetchedCrmItems[fetchedCrmItems.length - 1]?.id || 0
     document.getElementById('id').value = Number(lastItemId) + 1
 
-    await Promise.all([minLoadingTime, crmDataResponse, crmItemsResponse])
+    // console.log('fetchedCrmItems', fetchedCrmItems)
 
-    populatePartnerLoockup(fetchedCrmData)
+    // populatePartnerLoockup(fetchedCrmData)
     commonSearch(fetchedCrmData)
 
     if (userLevel === 'admin') {
@@ -54,7 +56,69 @@ async function fetchData () {
           data.followUp = relatedCrmItems.map(item => item.followUp)
         }
       })
+    } else if (userLevel === 'manager' && userCategory === 'technical') {
+      // Admin: No filtering, use all data
+
+      // console.log('fetchedCrmData', fetchedCrmData)
+
+      crmData = fetchedCrmData.filter(
+        item => item.stage.toLowerCase() !== 'completed'
+      ) // Update the global variable
+      crmItems = fetchedCrmItems.filter(
+        item => item.type.toLowerCase() !== 'complete'
+      ) // Update the global variable
+
+      crmItems.forEach(item => {
+        const relatedCrmData = crmData.find(data => data.id === item.trnNo)
+        if (relatedCrmData) {
+          item.description = relatedCrmData.description
+          item.stage = relatedCrmData.stage
+          item.customer = relatedCrmData.customer
+          item.partner = relatedCrmData.partner
+        }
+      })
+      crmData.forEach(data => {
+        const relatedCrmItems = crmItems.filter(item => item.trnNo === data.id)
+        if (relatedCrmItems.length > 0) {
+          data.followUp = relatedCrmItems.map(item => item.followUp)
+        }
+      })
+    } else if (userLevel === 'user' && userCategory === 'technical') {
+      // Admin: No filtering, use all data
+
+      // console.log('fetchedCrmItems', fetchedCrmItems)
+      let updatedCrmData
+      crmData = fetchedCrmData.filter(
+        item => item.stage.toLowerCase() !== 'completed'
+      ) // Update the global variable
+      crmItems = fetchedCrmItems.filter(
+        item =>
+          item.type.toLowerCase() !== 'complete' &&
+          (item.salesRep === userSession || item.fupUser === userSession)
+      ) // Update the global variable
+
+      crmItems.forEach(item => {
+        const relatedCrmData = crmData.find(data => data.id === item.trnNo)
+        if (relatedCrmData) {
+          item.description = relatedCrmData.description
+          item.stage = relatedCrmData.stage
+          item.customer = relatedCrmData.customer
+          item.partner = relatedCrmData.partner
+        }
+        updatedCrmData = relatedCrmData
+        // console.log('relatedCrmData', relatedCrmData)
+      })
+      crmData.forEach(data => {
+        const relatedCrmItems = crmItems.filter(item => item.trnNo === data.id)
+        if (relatedCrmItems.length > 0) {
+          data.followUp = relatedCrmItems.map(item => item.followUp)
+        }
+        // console.log('relatedCrmItems', relatedCrmItems)
+      })
+
+      crmData = updatedCrmData
     } else {
+      // console.log('Invalid user level or category')
       // Non-admin: Filter data by session user
       const matchedSalesRep = fetchedCrmData.filter(
         item => item.salesRep.trim() === userSession.trim()
@@ -87,6 +151,8 @@ async function fetchData () {
             data.followUp = relatedCrmItems.map(item => item.followUp)
           }
         })
+
+        // console.log('crmData', crmData)
       } else {
         //update table if user is follow up user
         const matchedFupUserData = fetchedCrmItems.filter(
@@ -109,7 +175,7 @@ async function fetchData () {
       }
     }
 
-    //Fetch Rep Details
+    // //Fetch Rep Details
     const usersResponse = await fetch('../../functions/fetchUsers.php')
     if (!usersResponse.ok) throw new Error('Error while fetching Rep Items')
     users = await usersResponse.json()
@@ -123,26 +189,29 @@ async function fetchData () {
     const brandResponse = await fetch('../../functions/fetchBrand.php')
     if (!brandResponse.ok) throw new Error('Error while fetching brand ')
     brand = await brandResponse.json()
+    // Fetch product Detailsexport
     // Fetch brand Details
     if (crmData || crmItems) {
-      populateCustomers()
-      populatePartners()
-      populateBrand(brand)
-      populateModels(products)
-      populateUsers(users)
-      calculateAndDisplayTotals(crmData)
-      populateGp(crmItems)
-      populateDealNumber(crmData)
-      dailyPerformanceDeal(crmData)
-      dailyPerformanceDealActions(crmItems)
-      linkCards(crmData, crmItems, users)
-      // Access the data later
+      // console.log('crmData', crmData)
+      //console.log('Accessing crmData globally:', crmData);
+      //  //console.log('Accessing crmItems globally:', crmItems);
+
+      populateDashBoard(crmItems, crmData)
+      populateCrmData(crmData, crmItems, users)
+      populateCrmItems(crmItems, crmData, users)
+      // // Access the data later
       setTimeout(() => {
-        //  //console.log('Accessing crmData globally:', crmData);
-        //  //console.log('Accessing crmItems globally:', crmItems);
-        populateDashBoard(crmItems, crmData)
-        populateCrmData(crmData, crmItems, users)
-        populateCrmItems(crmItems, crmData, users)
+        populateCustomers()
+        populatePartners()
+        populateBrand(brand)
+        populateModels(products)
+        populateUsers(users)
+        calculateAndDisplayTotals(crmData)
+        populateGp(crmItems)
+        populateDealNumber(crmData)
+        dailyPerformanceDeal(crmData)
+        dailyPerformanceDealActions(crmItems)
+        linkCards(crmData, crmItems, users)
       }, 1000) // Ensures enough time for fetch to complete
     }
   } catch (error) {
@@ -426,20 +495,26 @@ function populateBrand (brand) {
   //  //console.log('Dropdown options:', $('#brand').children('option').map((_, el) => $(el).val()).get());
 }
 
-function populateModels (products) {
-  // //console.log('products', products);
-  const selectElement = document.getElementById('model')
+function populateModels(products) {
+  const selectElement = document.getElementById('model');
+  const dealItems = document.getElementById('dealItems');
 
   // Clear existing options
-  selectElement.innerHTML = '<option value="">SELECT</option>'
+  selectElement.innerHTML = '<option value="">SELECT</option>';
+  dealItems.innerHTML = '<option></option>';
 
   // Add user names to the select element
   products.forEach(product => {
-    const option = document.createElement('option')
-    option.value = product.item_code // Using id as the value
-    option.textContent = product.item_code
-    selectElement.appendChild(option)
-  })
+    const option1 = document.createElement('option');
+    option1.value = product.item_code; // Using id as the value
+    option1.textContent = product.item_code;
+    selectElement.appendChild(option1);
+
+    const option2 = document.createElement('option');
+    option2.value = product.item_code; // Using id as the value
+    option2.textContent = product.item_code;
+    dealItems.appendChild(option2);
+  });
 
   // Initialize Select2
   $(document).ready(function () {
@@ -448,8 +523,18 @@ function populateModels (products) {
       allowClear: true,
       width: '100%',
       dropdownParent: $('#detaiTableModal') // Fixes dropdown positioning
-    })
-  })
+    });
+  });
+
+  $(document).ready(function () {
+    $('#dealItems').select2({
+      placeholder: 'Select Model',
+      allowClear: true,
+      width: '100%',
+      dropdownParent: $('#mainTableModal'), // Fixes dropdown positioning
+      multiple: true // Enable multiselect
+    });
+  });
 }
 
 function populateUsers (users) {
@@ -543,260 +628,176 @@ function calculateAndDisplayTotals (crmData) {
 }
 
 function populateDashBoard (crmItems) {
-  // console.log('crmItems', crmItems);
+  // Pre-group and categorize items
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
 
+  const groupedItems = new Map()
   const todayItems = []
   const overdueItems = []
   const upcomingItems = []
+  let completedCount = 0
+  let invoicedCount = 0
+  let quotedCount = 0
+  let inProgressCount = 0
+  let continuousCount = 0
+  let initialCount = 0
 
-  // Group items by trnNo
-  const groupedItems = crmItems.reduce((acc, item) => {
-    if (item.stage === 'completed') return acc // Ignore completed items
-    const trnNo = item.trnNo
-    if (!acc[trnNo]) acc[trnNo] = []
-    acc[trnNo].push(item)
-    return acc
-  }, {})
-
-  // Get today's date (set to midnight)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0) // Remove time portion for accurate comparison
-
-  // Process each trnNo group
-  Object.keys(groupedItems).forEach(trnNo => {
-    const items = groupedItems[trnNo]
-
-    // Filter out invalid followUp dates (e.g., "0000-00-00")
-    const validItems = items.filter(item => item.followUp !== '0000-00-00')
-
-    // If no valid followUp dates exist, skip
-    if (validItems.length === 0) {
+  // Single pass through crmItems to group and count
+  crmItems.forEach(item => {
+    if (item.stage === 'completed') {
+      completedCount++
       return
     }
 
-    // Find the latest followUp
-    const latestItem = validItems.reduce((latest, current) => {
+    // Count stages and types
+    if (item.type === 'Invoice') invoicedCount++
+    if (item.type === 'Quote') quotedCount++
+    if (item.stage === 'in-progress') inProgressCount++
+    if (item.stage === 'continuous') continuousCount++
+    if (item.stage === 'initial') initialCount++
+
+    if (item.followUp === '0000-00-00') return
+
+    const trnNo = item.trnNo
+    if (!groupedItems.has(trnNo)) groupedItems.set(trnNo, [])
+    groupedItems.get(trnNo).push(item)
+  })
+
+  // Process groups and categorize latest follow-ups
+  groupedItems.forEach(items => {
+    const latestItem = items.reduce((latest, current) => {
       const latestDate = new Date(latest.followUp)
       const currentDate = new Date(current.followUp)
       return currentDate > latestDate ? current : latest
     })
 
-    // Parse the latest followUp date
     const followUpDate = new Date(latestItem.followUp)
-
-    // Normalize followUpDate to midnight for accurate comparison
     followUpDate.setHours(0, 0, 0, 0)
 
-    // Categorize the items based on the followUp date
     if (followUpDate.getTime() === today.getTime()) {
-      todayItems.push(latestItem) // Push to todayItems array
+      todayItems.push(latestItem)
     } else if (followUpDate < today) {
-      overdueItems.push(latestItem) // Push to overdueItems array
+      overdueItems.push(latestItem)
     } else {
-      upcomingItems.push(latestItem) // Push to upcomingItems array
+      upcomingItems.push(latestItem)
     }
   })
 
-  // Optional: Log the arrays for confirmation
-  // console.log("Today's Follow-ups:", todayItems);
-  //  console.log("Overdue Follow-ups:", overdueItems);
-  // console.log("Upcoming Follow-ups:", upcomingItems);
-
-  // Return arrays in case you want to use them elsewhere
-
-  // Function to create HTML content for the cards
-  function logTrnNo (trnNo) {
-    console.log('Selected trnNo:', trnNo)
-
-    if (trnNo) {
-      const filteredItems = crmItems.filter(item => item.trnNo === trnNo)
-
-      //console.clear(); // Clear the console for clarity
-      console.log('Filtered items for trnNo:', trnNo, filteredItems)
-
-      showDetailTableTab()
-      populateCrmItems(filteredItems, crmData)
-    } else {
-      console.error('No event-card found for the clicked element.')
-    }
-  }
-
+  // Create event card template
   const createEventCard = (item, status) => {
-    let statusClass = status === 'followUp' ? 'primary' : 'warning'
-    let cardClass =
-      status === 'followUp'
-        ? 'highlight-today'
-        : status === 'pending'
-        ? 'highlight-past'
-        : ''
-
+    const statusClass = status === 'followUp' ? 'primary' : 'warning'
+    const cardClass =
+      status === 'followUp' ? 'highlight-today' : 'highlight-past'
     return `
-        <div class="event-card ${cardClass} p-4 mb-3 bg-white position-relative" 
-             data-trnno="${item.trnNo}" 
-             data-status="${status}" 
-             style="border-radius: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);">
-            
-            <!-- Status Badge -->
-            <div class="position-absolute" style="top: 15px; right: 15px;">
-                <span class="badge badge-${statusClass} px-3 py-2 rounded-pill">
-                    ${status === 'followUp' ? 'Follow Up' : 'Overdue'}
-                </span>
-            </div>
-
-            <!-- Header Section -->
-            <div class="d-flex align-items-center mb-3">
-                <h5 class="mb-0 me-4 font-weight-bold">#${item.trnNo}</h5>
-                <h6 class="mb-0 text-muted">
-                    <i class="fas fa-user-tie me-2"></i>${item.salesRep}
-                </h6>
-            </div>
-
-            <!-- Main Content -->
-            <div class="row g-3">
-                <!-- Follow Up Date -->
-                <div class="col-md-3 col-sm-6">
-                    <div class="p-1 rounded bg-light d-flex flex-column" 
-                         style="height: 55px; min-width: 200px;">
-                        <small class="text-muted">Follow Up Date :</small>
-                        <strong class="text-dark">${new Date(
-                          item.followUp
-                        ).toLocaleDateString()}</strong>
-                    </div>
-                </div>
-
-                <!-- Customer -->
-                <div class="col-md-3 col-sm-6">
-                    <div class="p-1 rounded bg-light d-flex flex-column" 
-                         style="height: 55px; min-width: 200px;">
-                        <small class="text-muted">Customer :</small>
-                        <strong class="text-primary text-truncate">${
-                          item.customer
-                        }</strong>
-                    </div>
-                </div>
-
-                <!-- Partner -->
-                <div class="col-md-3 col-sm-6">
-                    <div class="p-1 rounded bg-light d-flex flex-column" 
-                         style="height: 55px; min-width: 200px;">
-                        <small class="text-muted">Partner :</small>
-                        <strong class="text-primary text-truncate">${
-                          item.partner
-                        }</strong>
-                    </div>
-                </div>
-
-                <!-- Follow Up Action -->
-                <div class="col-md-3 col-sm-6">
-                    <div class="p-1 rounded bg-light d-flex flex-column" 
-                         style="height: 55px; min-width: 200px;">
-                        <small class="text-muted ">Follow Up Action :</small>
-                        <strong class="text-dark text-truncate">${
-                          item.fupAction
-                        }</strong>
-                    </div>
-                </div>
-            </div>
+      <div class="event-card ${cardClass} p-4 mb-3 bg-white position-relative" 
+           data-trnno="${item.trnNo}" 
+           data-status="${status}" 
+           style="border-radius: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);">
+        <div class="position-absolute" style="top: 15px; right: 15px;">
+          <span class="badge badge-${statusClass} px-3 py-2 rounded-pill">
+            ${status === 'followUp' ? 'Follow Up' : 'Overdue'}
+          </span>
         </div>
+        <div class="d-flex align-items-center mb-3">
+          <h5 class="mb-0 me-4 font-weight-bold">#${item.trnNo}</h5>
+          <h6 class="mb-0 text-muted">
+            <i class="fas fa-user-tie me-2"></i>${item.salesRep}
+          </h6>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-3 col-sm-6">
+            <div class="p-1 rounded bg-light d-flex flex-column" style="height: 55px; min-width: 200px;">
+              <small class="text-muted">Follow Up Date :</small>
+              <strong class="text-dark">${new Date(
+                item.followUp
+              ).toLocaleDateString()}</strong>
+            </div>
+          </div>
+          <div class="col-md-3 col-sm-6">
+            <div class="p-1 rounded bg-light d-flex flex-column" style="height: 55px; min-width: 200px;">
+              <small class="text-muted">Customer :</small>
+              <strong class="text-primary text-truncate">${
+                item.customer
+              }</strong>
+            </div>
+          </div>
+          <div class="col-md-3 col-sm-6">
+            <div class="p-1 rounded bg-light d-flex flex-column" style="height: 55px; min-width: 200px;">
+              <small class="text-muted">Partner :</small>
+              <strong class="text-primary text-truncate">${
+                item.partner
+              }</strong>
+            </div>
+          </div>
+          <div class="col-md-3 col-sm-6">
+            <div class="p-1 rounded bg-light d-flex flex-column" style="height: 55px; min-width: 200px;">
+              <small class="text-muted">Follow Up Action :</small>
+              <strong class="text-dark text-truncate">${item.fupAction}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
     `
   }
 
-  // Attach event listener dynamically
-  document.addEventListener('click', event => {
-    const card = event.target.closest('.event-card')
-    if (card) {
-      const trnNo = card.getAttribute('data-trnno')
-      logTrnNo(trnNo)
+  // Batch DOM updates
+  const renderCards = (containerSelector, items, status) => {
+    const container = document.querySelector(containerSelector)
+    if (!container) return
+
+    const fragment = document.createDocumentFragment()
+    const tempDiv = document.createElement('div')
+    tempDiv.innerHTML = items
+      .map(item => createEventCard(item, status))
+      .join('')
+    while (tempDiv.firstChild) {
+      fragment.appendChild(tempDiv.firstChild)
     }
-  })
-
-  // Example of using this function with todayItems and overdueItems
-
-  const overdueContainer = document.querySelector('.event-card.pending')
-  const todayContainer = document.querySelector('.event-card.followUp')
-
-  // Clear previous content
-  overdueContainer.innerHTML = ''
-  todayContainer.innerHTML = ''
-
-  // Populate the containers with event cards
-  todayItems.forEach(item => {
-    todayContainer.innerHTML += createEventCard(item, 'followUp')
-  })
-  overdueItems.forEach(item => {
-    overdueContainer.innerHTML += createEventCard(item, 'pending')
-  })
-
-  // Calculate counts
-  const followUpCount = todayItems.length // Count of today's follow-ups
-  const overdueCount = overdueItems.length // Count of overdue items
-  const completedCount = crmItems.filter(
-    item => item.stage === 'completed'
-  ).length // Count of completed items
-  const invoicedDealsCount = crmItems.filter(
-    item => item.type === 'Invoice'
-  ).length // Count of invoicedDealsCount items
-  const quotededDealsCount = crmItems.filter(
-    item => item.type === 'Quote'
-  ).length // Count of quotededDealsCount items
-  const inProgressDealsCount = crmItems.filter(
-    item => item.stage === 'in-progress'
-  ).length // Count of inProgressDealsCount items
-  const continuosDealsCount = crmItems.filter(
-    item => item.stage === 'continuous'
-  ).length // Count of continuosDealsCount items
-  const initialDealsCount = crmItems.filter(
-    item => item.stage === 'initial'
-  ).length // Count of initialDealsCount items
-
-  // Log the counts to the console
-  //console.log("Follow-Up Count:", followUpCount);
-  //console.log("Overdue Count:", overdueCount);
-  //console.log("Completed Count:", completedCount);
-
-  // Update initialDealsCount
-  const initialDealsElement = document.getElementById('initialDeals')
-  if (initialDealsElement) {
-    initialDealsElement.textContent = initialDealsCount
+    container.innerHTML = '' // Clear once
+    container.appendChild(fragment) // Append once
   }
 
-  // Update continuosDealsCount
-  const continuousDealsElement = document.getElementById('continuousDeals')
-  if (continuousDealsElement) {
-    continuousDealsElement.textContent = continuosDealsCount
+  // Render cards asynchronously to avoid blocking
+  setTimeout(() => {
+    renderCards('.event-card.followUp', todayItems, 'followUp')
+    renderCards('.event-card.pending', overdueItems, 'pending')
+  }, 0)
+
+  // Update counts in DOM
+  const updateCount = (id, count) => {
+    const element = document.getElementById(id)
+    if (element) element.textContent = count
   }
 
-  // Update inProgressDealsCount
-  const inProgressDealsElement = document.getElementById('inProgressDeals')
-  if (inProgressDealsElement) {
-    inProgressDealsElement.textContent = inProgressDealsCount
-  }
+  updateCount('pendingTotal', overdueItems.length)
+  updateCount('completedTotal', completedCount)
+  updateCount('invoicedDeals', invoicedCount)
+  updateCount('totalQuotedDeals', quotedCount)
+  updateCount('inProgressDeals', inProgressCount)
+  updateCount('continuousDeals', continuousCount)
+  updateCount('initialDeals', initialCount)
 
-  // Update Pending Follow-ups
-  const pendingTotalElement = document.getElementById('pendingTotal')
-  if (pendingTotalElement) {
-    pendingTotalElement.textContent = overdueCount
-  }
-
-  // Update Completed Deals
-  const completedTotalElement = document.getElementById('completedTotal')
-  if (completedTotalElement) {
-    completedTotalElement.textContent = completedCount
-  }
-
-  // Update invoicedDealsCount
-  const invoicedDealsElement = document.getElementById('invoicedDeals')
-  if (invoicedDealsElement) {
-    invoicedDealsElement.textContent = invoicedDealsCount
-  }
-
-  // Update quotedDealsElement
-  const quotedDealsElement = document.getElementById('totalQuotedDeals')
-  if (quotedDealsElement) {
-    quotedDealsElement.textContent = quotededDealsCount
+  // Event listener for clicks (add only once)
+  if (!document.getElementById('populateDashBoardListener')) {
+    document.addEventListener(
+      'click',
+      event => {
+        const card = event.target.closest('.event-card')
+        if (card) {
+          const trnNo = card.getAttribute('data-trnno')
+          console.log('Selected trnNo:', trnNo)
+          const filteredItems = crmItems.filter(item => item.trnNo === trnNo)
+          console.log('Filtered items for trnNo:', trnNo, filteredItems)
+          showDetailTableTab()
+          populateCrmItems(filteredItems, crmData)
+        }
+      },
+      { once: false, passive: true }
+    )
+    document.body.setAttribute('id', 'populateDashBoardListener') // Mark as added
   }
 }
-
 const linkCards = async (crmData, crmItems) => {
   // console.log('crmData On lnkCard function', crmData);
   // Add event listeners to log card details on click
@@ -946,60 +947,79 @@ function populateCrmData (crmData, crmItems, users) {
       {
         data: 'id',
         title: 'DEAL No',
-        type: 'text'
+        readOnly: true
       },
       {
         data: 'date',
         title: 'DATE',
-        type: 'date',
-        dateFormat: 'YYYY-MM-DD'
+        dateFormat: 'YYYY-MM-DD',
+        readOnly: true
       },
       {
         data: 'description',
         title: 'DESCRIPTION',
-        type: 'numeric'
+        readOnly: true
       },
       {
         data: 'salesRep',
         title: 'REP',
-        type: 'text'
+        readOnly: true
       },
       {
         data: 'partner',
         title: 'PARTNER',
-        type: 'text'
+        readOnly: true
       },
       {
         data: 'customer',
         title: 'CUSTOMER',
-        type: 'text'
+        readOnly: true
       },
       {
         data: 'cusTel',
         title: 'CONTACT',
-        type: 'text'
+        readOnly: true
       },
       {
         data: 'partnerRep',
         title: 'PARTNER REP',
-        type: 'text'
+        readOnly: true
       },
       {
         data: 'stage',
         title: 'STAGE',
-        type: 'text'
+        readOnly: true
       },
       {
         data: 'multyTender',
         title: 'MT-No',
-        type: 'text'
+        readOnly: true
       },
       {
         data: 'time',
         title: 'TIME',
-        type: 'text'
+        readOnly: true
+      },
+      {
+        data: 'gp',
+        title: 'GP',
+        readOnly: true
+      },
+      {
+        data: 'gpMonth',
+        title: 'GpMonth',
+        readOnly: true
+      },
+      {
+        data: 'items',
+        title: 'Items',
+        readOnly: true
       }
     ],
+    hiddenColumns: {
+      columns: [6,7,9,10,13], // Hide the 'id' column (index 10, since it's the 11th column, 0-based indexing)
+      indicators: false // Optional: Set to true if you want to show indicators for hidden columns
+    },
     rowHeaders: false,
     colHeaders: true,
     height: 500,
@@ -1031,7 +1051,7 @@ function populateCrmData (crmData, crmItems, users) {
     colWidths: [
       45, // Width for 'DEAL No'
       60, // Width for 'DATE'
-      300, // Width for 'DESCRIPTION' (make this larger)
+      200, // Width for 'DESCRIPTION' (make this larger)
       50, // Width for 'SALES REP'
       125, // Width for 'PARTNER'
       125, // Width for 'CUSTOMER'
@@ -1077,7 +1097,7 @@ function populateCrmData (crmData, crmItems, users) {
               cellProperties.className = 'highlight-future' // Highlight for future date
             }
           } else {
-            console.warn(`No valid follow-up dates for row: ${row}`)
+            // console.warn(`No valid follow-up dates for row: ${row}`)
           }
         }
       } else {
@@ -1095,8 +1115,7 @@ function populateCrmData (crmData, crmItems, users) {
             if (userCategory != 'technical') {
               const selectedRowIndex = selection[0].start.row
               const selectedRowData = hot.getDataAtRow(selectedRowIndex)
-              document.getElementById('dealSalesRep').value =
-                userSession || ''
+              document.getElementById('dealSalesRep').value = userSession || ''
 
               fetch('../../functions/fetchCrmData.php')
                 .then(response => {
@@ -1139,6 +1158,8 @@ function populateCrmData (crmData, crmItems, users) {
             if (userSession == selectedRowData[3] || userLevel == 'admin') {
               // Get the value of the first column (trnNo)
               const selectedTrnNo = selectedRowData[0]
+              // console.log('selectedTrnNo', selectedTrnNo )
+              populateDealItems(selectedTrnNo, crmItems)
               document.getElementById('dealNo').value = selectedTrnNo || '' // Ensure a fallback value
               document.getElementById('dealDate').value =
                 selectedRowData[1] || ''
@@ -1147,6 +1168,11 @@ function populateCrmData (crmData, crmItems, users) {
               document.getElementById('dealSalesRep').value =
                 selectedRowData[3] || ''
               document.getElementById('cusTel').value = selectedRowData[6] || ''
+              document.getElementById('dealGp').value = selectedRowData[11] || ''
+              document.getElementById('dealGpMonth').value = selectedRowData[12] || ''
+
+                const trimmedItems = selectedRowData[13].split(',').map(item => item.trim());
+                $('#dealItems').val(trimmedItems).trigger('change');
 
               const trimmeddealCustomer = (selectedRowData[5] || '').trim()
               if (
@@ -1156,10 +1182,10 @@ function populateCrmData (crmData, crmItems, users) {
               ) {
                 $('#dealCustomer').val(trimmeddealCustomer).trigger('change')
               } else {
-                console.warn(
-                  'Customer not found in dropdown:',
-                  trimmeddealCustomer
-                )
+                // console.warn(
+                //   'Customer not found in dropdown:',
+                //   trimmeddealCustomer
+                // )
               }
 
               const trimmeddealPartner = (selectedRowData[4] || '').trim()
@@ -1170,10 +1196,10 @@ function populateCrmData (crmData, crmItems, users) {
               ) {
                 $('#dealPartner').val(trimmeddealPartner).trigger('change')
               } else {
-                console.warn(
-                  'Partner not found in dropdown:',
-                  trimmeddealPartner
-                )
+                // console.warn(
+                //   'Partner not found in dropdown:',
+                //   trimmeddealPartner
+                // )
               }
 
               setTimeout(() => {
@@ -1193,10 +1219,10 @@ function populateCrmData (crmData, crmItems, users) {
               ) {
                 $('#dealStage').val(trimmeddealStage).trigger('change')
               } else {
-                console.warn(
-                  'Stage is not found in dropdown:',
-                  trimmeddealStage
-                )
+                // console.warn(
+                //   'Stage is not found in dropdown:',
+                //   trimmeddealStage
+                // )
               }
 
               const trimmeddealTender = (selectedRowData[9] || '').trim()
@@ -1207,10 +1233,10 @@ function populateCrmData (crmData, crmItems, users) {
               ) {
                 $('#multyTender').val(trimmeddealTender).trigger('change')
               } else {
-                console.warn(
-                  'Stage is not found in dropdown:',
-                  trimmeddealTender
-                )
+                // console.warn(
+                //   'Stage is not found in dropdown:',
+                //   trimmeddealTender
+                // )
               }
               mainTableModal.show()
             } else {
@@ -1268,10 +1294,9 @@ function populateCrmData (crmData, crmItems, users) {
         remove_stock: {
           name: '<i class="fa fa-trash"></i> Remove This Deal',
           callback: function (key, selection) {
-           
-              const selectedRow = selection[0].start.row // Get the selected row index
-              const selectedRowData = hot.getDataAtRow(selectedRow) // Get data of the selected row
-            if ( userLevel == 'admin' || userSession == selectedRowData[3]) {
+            const selectedRow = selection[0].start.row // Get the selected row index
+            const selectedRowData = hot.getDataAtRow(selectedRow) // Get data of the selected row
+            if (userLevel == 'admin' || userSession == selectedRowData[3]) {
               // Extract the id from the selected row data
               const dealId = selectedRowData[0] // Assuming the 'id' is in the first column
 
@@ -1325,6 +1350,338 @@ function populateCrmData (crmData, crmItems, users) {
     },
     licenseKey: 'non-commercial-and-evaluation'
   })
+}
+
+function populateDealItems (selectedId, crmItems) {
+  // console.log('selectedId', selectedId);
+  // console.log('crmItems', crmItems);
+
+  const dealItems = crmItems.filter(item => item.trnNo === selectedId)
+  // console.log('dealItems', dealItems)
+
+  const fullDetailTable = document.getElementById('fullDetailTable')
+  const detaiTableModal = new bootstrap.Modal(
+    document.getElementById('detaiTableModal')
+  )
+
+  // Clear the table before displaying new data
+  // fullDetailTable.innerHTML = '';
+
+  const hot = new Handsontable(fullDetailTable, {
+    data: dealItems,
+    colHeaders: true,
+    columns: [
+      { data: 'id', title: 'ID', width: 50, readOnly: true },
+      { data: 'date', title: 'Date', width: 100, readOnly: true },
+      { data: 'action', title: 'Action', width: 150, readOnly: true },
+      { data: 'salesRep', title: 'Sales Rep', width: 100, readOnly: true },
+      { data: 'customer', title: 'Customer', width: 150, readOnly: true },
+      { data: 'partner', title: 'Partner', width: 150, readOnly: true },
+      { data: 'type', title: 'Type', width: 100, readOnly: true },
+      { data: 'followUp', title: 'Follow Up', width: 100, readOnly: true },
+      { data: 'fupUser', title: 'Fup User', width: 100, readOnly: true },
+      { data: 'fupAction', title: 'Fup Action', width: 150, readOnly: true },
+      { data: 'brand', title: 'Brand', width: 100, readOnly: true },
+      { data: 'model', title: 'Model', width: 100, readOnly: true },
+      { data: 'inv', title: 'Invoice', width: 100, readOnly: true },
+      { data: 'qtNo', title: 'Quote', width: 100, readOnly: true },
+      { data: 'media', title: 'Media', width: 100, readOnly: true },
+      {
+        data: 'supTicket',
+        title: 'Support Ticket',
+        width: 150,
+        readOnly: true
+      },
+      { data: 'gp', title: 'GP', width: 100, readOnly: true },
+      { data: 'gpMonth', title: 'GP Month', width: 100, readOnly: true },
+      { data: 'updated_at', title: 'Updated At', width: 150, readOnly: true }
+    ],
+    rowHeaders: true,
+    width: '100%',
+    height: 'auto',
+    stretchH: 'all',
+    manualColumnResize: true,
+    manualRowResize: true,
+    contextMenu: true,
+    filters: true,
+    dropdownMenu: true,
+    fixedColumnsStart: 3, // Hold the first 3 columns when scrolling horizontally
+    licenseKey: 'non-commercial-and-evaluation',
+    cells: function (row, col) {
+      const cellProperties = {}
+      const rowData = this.instance.getSourceDataAtRow(row)
+      const followUpDates = rowData.followUp ? [new Date(rowData.followUp)] : []
+      const latestFollowUpDate =
+        followUpDates.length > 0
+          ? new Date(Math.max(...followUpDates.map(date => date.getTime())))
+          : null
+      const currentDate = new Date()
+      currentDate.setHours(0, 0, 0, 0) // Set to midnight to compare dates only
+
+      if (row === this.instance.countRows() - 1) {
+        // console.log('latest follow up date', latestFollowUpDate);
+        if (latestFollowUpDate && latestFollowUpDate < currentDate) {
+          // console.log('latest follow up row', row);
+          if (row) {
+            cellProperties.renderer = function (
+              instance,
+              td,
+              row,
+              col,
+              prop,
+              value,
+              cellProperties
+            ) {
+              Handsontable.renderers.TextRenderer.apply(this, arguments)
+              td.style.backgroundColor = '#ff3600'
+              td.style.color = '#ffffff'
+            }
+          }
+        } else if (latestFollowUpDate && latestFollowUpDate == currentDate) {
+          // console.log('latest follow up row', row);
+          if (row) {
+            cellProperties.renderer = function (
+              instance,
+              td,
+              row,
+              col,
+              prop,
+              value,
+              cellProperties
+            ) {
+              Handsontable.renderers.TextRenderer.apply(this, arguments)
+              td.style.backgroundColor = '#00e0ff'
+            }
+          }
+        } else {
+          // console.log('latest follow up row', row);
+        }
+      }
+      return cellProperties
+    },
+    contextMenu: {
+      items: {
+        view_details: {
+          name: '<i class="fa fa-pencil-alt"></i> Edit Action',
+          callback: async function (key, selection) {
+            const selectedRowIndex = selection[0].start.row
+            const selectedRowData = hot.getDataAtRow(selectedRowIndex)
+
+            // console.log('selectedRowData', selectedRowData)
+
+            if (userSession == selectedRowData[3] || userLevel == 'admin') {
+              // Fill out the form with selected row data
+              document.getElementById('id').value = selectedRowData[0]
+              document.getElementById('trnNo').value = selectedRowData[0]
+              document.getElementById('date').value = selectedRowData[1]
+              document.getElementById('action').value = selectedRowData[5]
+              document.getElementById('salesRep').value = selectedRowData[3]
+              document.getElementById('type').value = selectedRowData[6]
+              document.getElementById('media').value = selectedRowData[14]
+              document.getElementById('followup').value = selectedRowData[7]
+              document.getElementById('fupAction').value = selectedRowData[9]
+              document.getElementById('supTicket').value = selectedRowData[14]
+              document.getElementById('gp').value = selectedRowData[15]
+              document.getElementById('gpMonth').value = selectedRowData[16]
+
+              if (
+                selectedRowData[4] == 'Quote' ||
+                selectedRowData[4] == 'Invoice'
+              ) {
+                document.getElementById('gpArea').hidden = false
+              } else {
+                document.getElementById('gpArea').hidden = true
+              }
+
+              // Populate Select2 dropdowns
+              const userValue = selectedRowData[8]
+              const brandValue = selectedRowData[10]
+              const modelValue = selectedRowData[11]
+              const invValue = selectedRowData[12]
+              const quoteValue = selectedRowData[13]
+
+              // Handle Select2 dropdown selection
+              const trimmedUserValue = userValue ? userValue.trim() : 'N/A'
+              if (
+                $('#fup option').filter(function () {
+                  return $(this).val().trim() === trimmedUserValue
+                }).length > 0
+              ) {
+                $('#fup').val(trimmedUserValue).trigger('change')
+              }
+              const trimmedBrandValue = brandValue
+                ? brandValue.trim().toLowerCase()
+                : 'n/a'
+              // console.log('Trimmed Brand Value:', trimmedBrandValue)
+
+              const matchedOption = $('#brand option').filter(function () {
+                const optionValue = $(this)
+                  .val()
+                  .trim()
+                  .toLowerCase()
+                  .replace(/\s+/g, '')
+                // console.log(
+                //   'Option Value:',
+                //   optionValue,
+                //   '===',
+                //   'Trimmed Brand Value:',
+                //   trimmedBrandValue.replace(/\s+/g, '')
+                // )
+                return optionValue === trimmedBrandValue.replace(/\s+/g, '')
+              })
+
+              if (matchedOption.length > 0) {
+                $('#brand').val(matchedOption.val()).trigger('change')
+              } else {
+                // console.log('No matching brand value found.')
+              }
+
+              const trimmedModelValue = modelValue ? modelValue.trim() : 'N/A'
+              if (
+                $('#model option').filter(function () {
+                  return $(this).val().trim() === trimmedModelValue
+                }).length > 0
+              ) {
+                $('#model').val(trimmedModelValue).trigger('change')
+              }
+
+              document.getElementById('inv').value = invValue
+              document.getElementById('quote').value = quoteValue
+              const previewFrame = document.querySelector(
+                '#filePreviewModal iframe'
+              )
+
+              viewFileBtn.addEventListener('click', async () => {
+                try {
+                  const id = selectedRowData[0] // Use the ID from the selected row
+                  if (!id) {
+                    alert('No file selected for viewing.')
+                    return
+                  }
+
+                  const response = await fetch(
+                    `../../functions/fetchCrmFile.php?id=${id}`
+                  )
+
+                  if (response.ok) {
+                    // Directly set the response URL as the iframe source
+                    previewFrame.src = `../../functions/fetchCrmFile.php?id=${id}`
+                    const childModal = new bootstrap.Modal(
+                      document.getElementById('filePreviewModal')
+                    )
+                    childModal.show()
+                  } else {
+                    alert('Unable to fetch the file. Please try again.')
+                    console.error('Fetch response:', await response.text())
+                  }
+                } catch (error) {
+                  console.error('Error fetching file:', error)
+                  alert('An error occurred while fetching the file.')
+                }
+              })
+
+              detaiTableModal.show()
+
+              var modalElement = document.getElementById('detaiTableModal')
+
+              // Reset the display property and show the modal
+              modalElement.style.display = 'block' // Ensure it's set to block before showing
+              var modalInstance = new bootstrap.Modal(modalElement)
+              modalInstance.show() // Use Bootstrap's modal.show() method
+
+              
+
+              //console.log("Modal shown.");
+            } else {
+              Swal.fire({
+                toast: true,
+                icon: 'error',
+                title:
+                  'You are not authorized to edit this action. Contact action owner or system admin',
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 5000,
+                timerProgressBar: true
+              })
+            }
+          }
+        },
+
+        remove_stock: {
+          name: '<i class="fa fa-trash"></i> Remove This Action',
+          callback: function (key, selection) {
+            const selectedRow = selection[0].start.row
+            // removeData(id, tableName);
+            const selectedRowData = hot.getDataAtRow(selectedRow) // Get data of the selected row
+            if (userSession == selectedRowData[4] || userLevel == 'admin') {
+              // Extract the id from the selected row data
+              const dealId = selectedRowData[0] // Assuming the 'id' is in the first column
+
+              // Confirm the deletion action
+              if (confirm(`Are you sure you want to remove this Deal`)) {
+                removeData(dealId, 'crmitems')
+
+                crmItems.splice(selectedRow, 1)
+                hot.render()
+
+                // Call your removeData function and pass the id
+              }
+            } else {
+              Swal.fire({
+                toast: true,
+                icon: 'error',
+                title:
+                  'You are not authorized to remove this action. Contact action owner or system admin',
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 5000,
+                timerProgressBar: true
+              })
+            }
+          }
+        },
+        duplicate_row: {
+          name: '    <i class="fa fa-mars-double" aria-hidden="true"></i>Duplicate Row',
+          callback: function (key, selection) {
+            const selectedRowIndex = selection[0].start.row // Get the index of the selected row
+            const selectedRowData = hot.getSourceDataAtRow(selectedRowIndex) // Get the full data of the selected row
+
+            if (selectedRowData) {
+              // Clone the selected row data
+              const newRowData = { ...selectedRowData }
+
+              // Insert the cloned row into the crmItems array
+              crmItems.splice(selectedRowIndex + 1, 0, newRowData)
+
+              // Reload the Handsontable data to reflect changes
+              hot.loadData(crmItems)
+            } else {
+              // console.warn('No row data found to duplicate.')
+            }
+          }
+        },
+        refresh: {
+          name: 'Refresh Table',
+          callback: function (key, options) {
+            fetchData()
+            setTimeout(() => {
+              refreshCrmData()
+              refreshCrmItems()
+            }, 1000) // Ensures enough time for fetch to complete
+            hot.render()
+          }
+        }
+      }
+    }
+  })
+
+  document
+    .getElementById('mainTableModal')
+    .addEventListener('hidden.bs.modal', function () {
+      // console.log('modal will close')
+      // Clear the table when the modal is hidden
+      fullDetailTable.innerHTML = ''
+    })
 }
 
 async function populateCustomerModal (customer, type) {
@@ -1643,12 +2000,11 @@ function populateCrmItems (crmItems, crmData) {
 
         // Add event listeners to the cell
         td.addEventListener('mouseover', e => {
-          const visualRow = instance.toPhysicalRow(row); // Convert to physical index
-          const filteredRowData = instance.getSourceData()[visualRow]; // Get correct row data
-      
-          showRowPopup(e, filteredRowData);
-      });
-      
+          const visualRow = instance.toPhysicalRow(row) // Convert to physical index
+          const filteredRowData = instance.getSourceData()[visualRow] // Get correct row data
+
+          showRowPopup(e, filteredRowData)
+        })
 
         td.addEventListener('mouseout', hideRowPopup)
       }
@@ -1831,7 +2187,7 @@ function populateCrmItems (crmItems, crmData) {
               // Reload the Handsontable data to reflect changes
               hot.loadData(crmItems)
             } else {
-              console.warn('No row data found to duplicate.')
+              // console.warn('No row data found to duplicate.')
             }
           }
         },
@@ -1943,6 +2299,9 @@ document.getElementById('dealBtn').addEventListener('click', function () {
   const dealPartRep = document.getElementById('dealPartRep').value
   const dealStage = document.getElementById('dealStage').value
   const multyTender = document.getElementById('multyTender').value
+  const dealGp = document.getElementById('dealGp').value
+  const dealGpMonth = document.getElementById('dealGpMonth').value
+  const items = $('#dealItems').val().join(', '); // Use jQuery to get all selected values and join them with a comma
 
   if (!dealDate || !dealDescription || !dealStage) {
     // Highlight missing fields with red border
@@ -1976,8 +2335,13 @@ document.getElementById('dealBtn').addEventListener('click', function () {
     dealPartner: dealPartner,
     dealPartRep: dealPartRep,
     dealStage: dealStage,
-    multyTender: multyTender
+    multyTender: multyTender,
+    dealGp : dealGp,
+    dealGpMonth: dealGpMonth,
+    items : items
   }
+
+  // console.log('dealData', dealData)
 
   // Prepare the request options
   const requestOptions = {
@@ -2512,8 +2876,8 @@ document.getElementById('saveEmployee').addEventListener('click', function () {
 //------------------------Detrail Table Ended------------------------Detrail Table Ended------------------------Detrail Table Ended------------------------Detrail Table Ended
 
 function removeData (id, tableName) {
-  console.log('ID to delete:', id)
-  console.log('Table name:', tableName)
+  // console.log('ID to delete:', id)
+  // console.log('Table name:', tableName)
 
   if (!id) {
     console.error('ID is undefined or null. Cannot proceed with deletion.')
@@ -2742,7 +3106,7 @@ function showDetailTableTab () {
   }
 }
 
-//DashBoard search bar for search all partners
+// //DashBoard search bar for search all partners
 
 function commonSearch (data) {
   const searchInput = document.getElementById('dashboardTableSearch')
@@ -2824,7 +3188,7 @@ function displayResults (results) {
   searchResults.style.display = 'block'
 }
 
-// control gpArea display according to the type
+// // control gpArea display according to the type
 
 document.getElementById('type').addEventListener('change', function () {
   // console.log(this.value); // Correct way to get the selected value
@@ -2868,13 +3232,13 @@ function populateDealNumber (crmData) {
       'multyTenderDescription'
     )
     if (matchedCrmData) {
-      console.log('Description:', matchedCrmData.description)
+      // console.log('Description:', matchedCrmData.description)
       descriptionTextarea.value = matchedCrmData.description
     } else {
-      console.log(
-        'No matching CRM data found for entered number:',
-        enteredNumber
-      )
+      // console.log(
+      //   'No matching CRM data found for entered number:',
+      //   enteredNumber
+      // )
       descriptionTextarea.value = '' // Clear the textarea if no match is found
     }
   })
@@ -3119,7 +3483,7 @@ function dailyPerformanceDeal (crmData) {
     readOnly: true, // Make the table read-only
     afterOnCellDblClick: function (event, coords, td) {
       const rowData = this.getSourceDataAtRow(coords.row)
-      console.log('Double-clicked row data:', rowData)
+      // console.log('Double-clicked row data:', rowData)
     }
   })
 

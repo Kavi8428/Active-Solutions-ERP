@@ -104,10 +104,16 @@ document.getElementById('fileInput').addEventListener('change', function (e) {
               unit_price: item['Sales Price'] || '',
               total: item.Amount || '',
               vat: item.VAT || '',
-              warranty: item.Warranty || '',
+              warranty: WarrantyExpireDate(item.Date, warrantyPeriod) || '',
               gp: item.GP || ''
             }
           };
+          function WarrantyExpireDate (invoiceDate, period) {
+            const date = new Date(invoiceDate)
+            date.setFullYear(date.getFullYear() + parseInt(period))
+            date.setDate(date.getDate() - 1)
+            return date.toISOString().split('T')[0]
+          }
         });
 
         // console.log('invoiceData', invoiceData); // Debugging

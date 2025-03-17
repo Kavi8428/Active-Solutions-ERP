@@ -393,10 +393,10 @@ if (!isset($_SESSION["user"])) {
                 </div>
                 <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
                     <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 d-flex align-items-center me-sm-4 h-75 " id="navbar">
-                        <div class="ms-md-auto pe-md-3 d-flex align-items-center w-25 ">
-                            <i class="fa fa-search" aria-hidden="false"></i>
-                            <select id="search" class="w-100">
-                                <option selected>SEARCH INVOICE</option>
+                        <div class="ms-md-auto pe-md-3  d-flex align-items-center w-25 position-relative">
+                            <i class="fa fa-search position-absolute ms-2" aria-hidden="true"></i>
+                            <select id="search" class="w-100 border-0 bg-white ps-5">
+                                <option value=" " selected>SEARCH INVOICE</option>
                             </select>
                         </div>
                         <div class="d-flex align-content-center justify-content-between gap-1" >

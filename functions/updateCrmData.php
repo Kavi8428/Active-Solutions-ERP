@@ -23,6 +23,9 @@ try {
     $dealPartRep = $pdo->quote($data['dealPartRep']);
     $dealStage = $pdo->quote($data['dealStage']);
     $multyTender = $pdo->quote($data['multyTender']);
+    $dealGp = $pdo->quote($data['dealGp']);
+    $dealGpMonth = $pdo->quote($data['dealGpMonth']);
+    $items = $pdo->quote($data['items']);
 
     // SQL query logic
     if (!empty($dealNo)) {
@@ -32,8 +35,8 @@ try {
 
         if ($exists == 0) {
             // Record does not exist, INSERT
-            $sql = "INSERT INTO crmdata (date, description, salesRep, partner, customer, cusTel, partnerRep, stage, multyTender) 
-                    VALUES ($dealDate, $dealDescription, $dealSalesRep, $dealPartner, $dealCustomer,$cusTel, $dealPartRep, $dealStage, $multyTender)";
+            $sql = "INSERT INTO crmdata (date, description, salesRep, partner, customer, cusTel, partnerRep, stage, multyTender,gp,gpMonth,items) 
+                    VALUES ($dealDate, $dealDescription, $dealSalesRep, $dealPartner, $dealCustomer,$cusTel, $dealPartRep, $dealStage, $multyTender,$dealGp,$dealGpMonth,$items)";
         } else {
             // Record exists, UPDATE
             $sql = "UPDATE crmdata SET 
@@ -45,14 +48,17 @@ try {
                         cusTel = $cusTel, 
                         partnerRep = $dealPartRep, 
                         stage = $dealStage,
-                        multyTender = $multyTender
+                        multyTender = $multyTender,
+                        gp = $dealGp,
+                        gpMonth = $dealGpMonth,
+                        items = $items
                     WHERE id = $dealNo";
         }
     } else {
         // No ID provided, INSERT
-        $sql = "INSERT INTO crmdata (date, description, salesRep, partner, customer,cusTel, partnerRep, stage, multyTender) 
-                VALUES ($dealDate, $dealDescription, $dealSalesRep, $dealPartner, $dealCustomer, $cusTel, $dealPartRep, $dealStage, $multyTender)";
-    }
+        $sql = "INSERT INTO crmdata (date, description, salesRep, partner, customer, cusTel, partnerRep, stage, multyTender,gp,gpMonth,items) 
+            VALUES ($dealDate, $dealDescription, $dealSalesRep, $dealPartner, $dealCustomer,$cusTel, $dealPartRep, $dealStage, $multyTender,$dealGp,$dealGpMonth,$items)";
+}
 
     // Execute the SQL
     $pdo->exec($sql);

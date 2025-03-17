@@ -134,17 +134,13 @@ function populateHandsonTable () {
       'VAT',
       'GP',
       'WARRANTY',
-      'OTHERS'
+      'OTHERS',
+      'ID'
+      // Note: Do NOT include 'ID' in colHeaders since it will be hidden
     ],
     columns: [
-      {
-        data: 'itemCode',
-        type: 'dropdown',
-        source: itemCodes
-      },
-      {
-        data: 'quantity'
-      },
+      { data: 'itemCode', type: 'dropdown', source: itemCodes },
+      { data: 'quantity' },
       {
         data: 'serials',
         renderer: function (
@@ -158,10 +154,8 @@ function populateHandsonTable () {
         ) {
           $(td).empty()
           const select = $(
-            `<select style="border:none;" class="text-sm border-0 bg-blue" multiple="multiple">
-            </select>`
+            `<select style="border:none;" class="text-sm border-0 bg-blue" multiple="multiple"></select>`
           )
-
           const rowItemCode = instance.getDataAtRowProp(row, 'itemCode')
           const relevantSerials = array
             .filter(item => item.itemCode === rowItemCode)
@@ -188,38 +182,27 @@ function populateHandsonTable () {
           })
         }
       },
-      {
-        data: 'description',
-        type: 'text'
-      },
+      { data: 'description', type: 'text' },
       {
         data: 'priceEach',
         type: 'numeric',
-        numericFormat: {
-          pattern: '0,0.00'
-        }
+        numericFormat: { pattern: '0,0.00' }
       },
       {
         data: 'amount',
         type: 'numeric',
-        numericFormat: {
-          pattern: '0,0.00'
-        },
+        numericFormat: { pattern: '0,0.00' },
         readOnly: true
       },
       {
         data: 'vat',
         type: 'numeric',
-        numericFormat: {
-          pattern: '0,0.00'
-        }
+        numericFormat: { pattern: '0,0.00' }
       },
       {
         data: 'gp',
         type: 'numeric',
-        numericFormat: {
-          pattern: '0,0.00'
-        }
+        numericFormat: { pattern: '0,0.00' }
       },
       {
         data: 'warranty',
@@ -227,11 +210,13 @@ function populateHandsonTable () {
         dateFormat: 'YYYY-MM-DD',
         correctFormat: true
       },
-      {
-        data: 'others',
-        type: 'text'
-      }
+      { data: 'others', type: 'text' },
+      { data: 'id', type: 'text', readOnly: true } // The 'id' column (no 'visible: false' needed here)
     ],
+    hiddenColumns: {
+      columns: [10], // Hide the 'id' column (index 10, since it's the 11th column, 0-based indexing)
+      indicators: true // Optional: Set to true if you want to show indicators for hidden columns
+    },
     manualColumnResize: true,
     manualRowResize: true,
     contextMenu: true,
@@ -244,36 +229,32 @@ function populateHandsonTable () {
     // Save data to localStorage whenever a change is made
     afterChange: function (changes, source) {
       if (source !== 'loadData') {
-        // Prevent triggering during initial load
-        const currentData = hot.getData() // Get the current data from Handsontable
-        localStorage.setItem('handsontableData', JSON.stringify(currentData)) // Save it to localStorage
+        const currentData = hot.getData()
+        localStorage.setItem('handsontableData', JSON.stringify(currentData))
       }
     }
   })
+
+  // Other hooks remain the same
   Handsontable.hooks.add('afterChange', function (changes, source) {
     if (source === 'edit') {
-      const data = this.getData();
+      const data = this.getData()
       data.forEach((row, index) => {
         if (row[1] && row[4]) {
-          const quantity = parseFloat(row[1]);
-  
-          // Check if row[4] is a string before calling replace
-          const price = typeof row[4] === 'string' 
-            ? parseFloat(row[4].replace(/[^0-9.-]+/g, '')) // Clean the price value if it's a string
-            : parseFloat(row[4]); // Directly parse if it's a number
-  
+          const quantity = parseFloat(row[1])
+          const price =
+            typeof row[4] === 'string'
+              ? parseFloat(row[4].replace(/[^0-9.-]+/g, ''))
+              : parseFloat(row[4])
           if (!isNaN(quantity) && !isNaN(price)) {
-            const amount = quantity * price;
-            this.setDataAtCell(index, 5, amount.toFixed(2), 'calculate');
+            const amount = quantity * price
+            this.setDataAtCell(index, 5, amount.toFixed(2), 'calculate')
           }
         }
-      });
+      })
     }
-  });
-  
-  
+  })
 
-  // Function to calculate the Total
   Handsontable.hooks.add('afterChange', function (changes, source) {
     if (source === 'edit' || source === 'calculate') {
       const data = this.getData()
@@ -283,18 +264,16 @@ function populateHandsonTable () {
           total += parseFloat(row[5])
         }
       })
-      //  console.log('Totals', total.toFixed(2));
     }
   })
+
   Handsontable.hooks.add('beforeRemoveRow', function (index, amount) {
     for (let i = index; i < index + amount; i++) {
-      // Fetch the entire row data
       const rowData = hot.getDataAtRow(i)
       if (rowData) {
         removedRows.push(rowData)
       }
     }
-    // console.log('Removed rows:', removedRows);
   })
 }
 
@@ -318,7 +297,8 @@ function populateInvoiceItems (selectedItem) {
       amount: item.total,
       vat: item.vat,
       gp: item.gp,
-      warranty: item.warranty
+      warranty: item.warranty,
+      id: item.id
     }))
 
     // Load the new data into the existing Handsontable instance
@@ -350,7 +330,6 @@ function sendData () {
   const status = document.getElementById('status').value //status
   const inventory = document.getElementById('inventory').checked //inventory
   const lInvNo = document.getElementById('lInvNo').value //Legacy invoice number
-
 
   // Validate form data
   const fields = [
@@ -412,7 +391,8 @@ function sendData () {
       'VAT',
       'GP',
       'WARRANTY',
-      'OTHERS'
+      'OTHERS',
+      'ID'
     ]
     // Filter out rows with all null or empty values
     const filteredData = tableData.filter(row => {
@@ -524,7 +504,7 @@ function sendData () {
   generalData['discountType'] = discountType
   generalData['discountValue'] = discountValue
   generalData['object'] = object
-  generalData['status'] = status 
+  generalData['status'] = status
   generalData['inventory'] = inventory
   generalData['lInvNo'] = lInvNo
 
@@ -542,7 +522,8 @@ function sendData () {
     'VAT',
     'GP',
     'WARRANTY',
-    'OTHERS'
+    'OTHERS',
+    'ID'
   ]
   // Filter out rows with all null or empty values
   const filteredData = tableData.filter(row => {
@@ -563,15 +544,14 @@ function sendData () {
     return rowObject
   })
 
-  console.log('removedRows',removedRows)
+  console.log('removedRows', removedRows)
 
   //-----------------------End Of handson table collection-------------------------->
 
   // // Send the data to the server or use it as needed
-  
 
   if (isCode === true) {
-    console.log('invItems',invItems);
+    console.log('invItems', invItems)
     $.ajax({
       url: '../../functions/updateInvoice.php',
       method: 'POST',
@@ -581,20 +561,20 @@ function sendData () {
         removedRows: removedRows,
         invItems: invItems
       }),
-       // Expect JSON response from the server
-        _success: function (response) {
-          // Handle the successful response
-       // console.log('normal invoice Response text:', response) // Log the response text for debugging
+      // Expect JSON response from the server
+      _success: function (response) {
+        // Handle the successful response
+        console.log('normal invoice Response text:', response) // Log the response text for debugging
 
-          showToast('Data Saved Successfully')
-          setTimeout(() => {
-            window.location.href = './invoice_view.php?id=' + generalData.inv;
-          }, 1500) // Wait for the toast to show off before reloading the page
-        },
-      get success() {
+        showToast('Data Saved Successfully')
+        setTimeout(() => {
+          window.location.href = './invoice_view.php?id=' + generalData.inv
+        }, 1500) // Wait for the toast to show off before reloading the page
+      },
+      get success () {
         return this._success
       },
-      set success(value) {
+      set success (value) {
         this._success = value
       },
       error: function (jqXHR, textStatus, errorThrown) {
@@ -603,91 +583,91 @@ function sendData () {
           textStatus,
           errorThrown
         )
-     //   console.log('normal invoice Response text:', jqXHR.responseText) // Log the response text for debugging
+        //   console.log('normal invoice Response text:', jqXHR.responseText) // Log the response text for debugging
       }
     })
 
-    // Find the first item in invItems to match PHP script's expected parameters
-    const itemDataList = invItems.length > 0 ? invItems : []
+      // // Find the first item in invItems to match PHP script's expected parameters
+      // const itemDataList = invItems.length > 0 ? invItems : []
 
-    // Fetch items from the server
-    fetch('../../functions/fetchItems.php')
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Error while fetching ITEMS')
-        }
-        return response.json()
-      })
-      .then(response => {
-        // Create an array to store data for each item
-        const dataToSendArray = itemDataList.map(itemData => {
-          const matchedItem = response.find(
-            item => item.item_code === itemData['ITEM']
-          );
+      // // Fetch items from the server
+      // fetch('../../functions/fetchItems.php')
+      //   .then(response => {
+      //     if (!response.ok) {
+      //       throw new Error('Error while fetching ITEMS')
+      //     }
+      //     return response.json()
+      //   })
+      //   .then(response => {
+      //     // Create an array to store data for each item
+      //     const dataToSendArray = itemDataList.map(itemData => {
+      //       const matchedItem = response.find(
+      //         item => item.item_code === itemData['ITEM']
+      //       )
 
-          console.log('matchedItem', matchedItem);
-          const brand = matchedItem ? matchedItem.brand : '';
-          const quantity = parseFloat(itemData['QUANTITY']) || 0;
-          const unitPrice = parseFloat(itemData['UNIT PRICE']) || 0;
-          const vatValue = unitPrice * (itemData['VAT']/100); // Assuming VAT is 15%
+      //       console.log('matchedItem', matchedItem)
+      //       const brand = matchedItem ? matchedItem.brand : ''
+      //       const quantity = parseFloat(itemData['QUANTITY']) || 0
+      //       const unitPrice = parseFloat(itemData['UNIT PRICE']) || 0
+      //       const vatValue = unitPrice * (itemData['VAT'] / 100) // Assuming VAT is 15%
 
-          return {
-            id: '',
-            inv: generalData.inv,
-            grn: generalData.grn || '',
-            gin: generalData.gin || '',
-            customer: generalData.customer,
-            cusEmployee: generalData.cusEmployee,
-            itemCode: itemData['ITEM'] || '',
-            item: itemData['ITEM'] || '',
-            itemDescription: itemData['DESCRIPTION'] || '',
-            brand: brand,
-            serial: itemData['SERIALS'] || '',
-            value: unitPrice.toFixed(2) || '',
-            qty: quantity.toFixed(2) || '',
-            object: generalData.object || '',
-            status: generalData.status || '',
-            warranty: itemData['WARRANTY'] || '',
-            gp: itemData['GP'] || '',
-            rep: generalData.rep,
-            date: generalData.invDate,
-            memo: itemData['DESCRIPTION'] || '',
-            vat: vatValue.toFixed(2) || '',
-            others: itemData['OTHERS'] || '',
-            lInvNo: generalData['lInvNo'] || ''
-          };
-        });
+      //       return {
+      //         id: '',
+      //         inv: generalData.inv,
+      //         grn: generalData.grn || '',
+      //         gin: generalData.gin || '',
+      //         customer: generalData.customer,
+      //         cusEmployee: generalData.cusEmployee,
+      //         itemCode: itemData['ITEM'] || '',
+      //         item: itemData['ITEM'] || '',
+      //         itemDescription: itemData['DESCRIPTION'] || '',
+      //         brand: brand,
+      //         serial: itemData['SERIALS'] || '',
+      //         value: unitPrice.toFixed(2) || '',
+      //         qty: quantity.toFixed(2) || '',
+      //         object: generalData.object || '',
+      //         status: generalData.status || '',
+      //         warranty: itemData['WARRANTY'] || '',
+      //         gp: itemData['GP'] || '',
+      //         rep: generalData.rep,
+      //         date: generalData.invDate,
+      //         memo: itemData['DESCRIPTION'] || '',
+      //         vat: vatValue.toFixed(2) || '',
+      //         others: itemData['OTHERS'] || '',
+      //         lInvNo: generalData['lInvNo'] || ''
+      //       }
+      //     })
 
-       console.log('dataToSendArray', dataToSendArray)
+      //     console.log('dataToSendArray', dataToSendArray)
 
-        // Send each item individually to match the PHP script requirements
-        dataToSendArray.forEach(item => {
-          $.ajax({
-            url: '../../functions/updateMasterInv.php',
-            method: 'POST',
-            contentType: 'application/x-www-form-urlencoded', // Form-encoded content type
-            data: item, // Send each item directly, matching PHP $_POST expectations
-            dataType: 'text',
-            success: function (response) {
-              console.log('master invoice Server response:', response)
-              if (response.message) {
-                showToast(response.message)
-                window.location.href = './invoice_view.php?id=' + item.inv;
-              } else if (response.error) {
-                console.error('Error:', response.error)
-              }
-            },
-            error: function (jqXHR, textStatus, errorThrown) {
-              console.error(
-                'master invoice Error sending data:',
-                textStatus,
-                errorThrown
-              )
-              console.log('master invoice Response text:', jqXHR.responseText)
-            }
-          })
-        })
-      })
+      //     // Send each item individually to match the PHP script requirements
+      //     dataToSendArray.forEach(item => {
+      //       $.ajax({
+      //         url: '../../functions/updateMasterInv.php',
+      //         method: 'POST',
+      //         contentType: 'application/x-www-form-urlencoded', // Form-encoded content type
+      //         data: item, // Send each item directly, matching PHP $_POST expectations
+      //         dataType: 'text',
+      //         success: function (response) {
+      //           console.log('master invoice Server response:', response)
+      //           if (response.message) {
+      //             showToast(response.message)
+      //             window.location.href = './invoice_view.php?id=' + item.inv
+      //           } else if (response.error) {
+      //             console.error('Error:', response.error)
+      //           }
+      //         },
+      //         error: function (jqXHR, textStatus, errorThrown) {
+      //           console.error(
+      //             'master invoice Error sending data:',
+      //             textStatus,
+      //             errorThrown
+      //           )
+      //           console.log('master invoice Response text:', jqXHR.responseText)
+      //         }
+      //       })
+      //     })
+      //   })
       .catch(error => {
         console.log('Error while fetching ITEMS', error)
       })
@@ -769,7 +749,7 @@ function populateGeneralData (response, urlValue) {
 
   rep.select2({
     placeholder: 'Select Rep',
-    width : 'resolve',
+    width: 'resolve',
     data: response.map(item => ({
       id: item.rep,
       text: item.rep
@@ -779,19 +759,35 @@ function populateGeneralData (response, urlValue) {
   searchInput.select2({
     placeholder: 'Select INV',
     width: '100%',
-    data: response.map(item => ({
+    data: response
+      .map(item => ({
+        id: item.inv,
+        text: item.inv
+      }))
+      .reverse() // Reverse the order of the items
+  })
+
+  let lastInvoiceNum = response
+    .map(item => ({
       id: item.inv,
       text: item.inv
     }))
-  })
+    .reverse() // Reverse the order of the items
+
+    
 
   if (urlValue) {
-    console.log('response:',response);
-    console.log('urlValue:',urlValue);
+    console.log('response:', response)
+    console.log('urlValue:', urlValue)
 
-    const matchedData = typeof urlValue === 'object' && urlValue.urlId
-      ? response.find(item => String(item.id).trim() === String(urlValue.urlId).trim())
-      : response.find(item => String(item.inv).trim() === String(urlValue).trim())
+    const matchedData =
+      typeof urlValue === 'object' && urlValue.urlId
+        ? response.find(
+            item => String(item.id).trim() === String(urlValue.urlId).trim()
+          )
+        : response.find(
+            item => String(item.inv).trim() === String(urlValue).trim()
+          )
 
     if (matchedData) {
       populateInvoiceItems(matchedData.id)
@@ -970,7 +966,7 @@ function populateCusEmployee (customer, selectedEmployee) {
         $('#cusEmployee').select2({
           placeholder: 'Select Employee',
           allowClear: true,
-          width : 'resolve'
+          width: 'resolve'
         })
 
         // Set the selected employee after ensuring options are populated
@@ -989,68 +985,79 @@ function populateCusEmployee (customer, selectedEmployee) {
   })
 }
 
-
 document.getElementById('fileInput').addEventListener('change', function (e) {
-  const file = e.target.files[0];
-
+  const file = e.target.files[0]
+  console.log('file reading start')
   if (file) {
-    const reader = new FileReader();
+    const reader = new FileReader()
 
     reader.onload = function (e) {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
+      const data = new Uint8Array(e.target.result)
+      const workbook = XLSX.read(data, { type: 'array' })
 
-      let invoiceData = [];
+      let invoiceData = []
 
       workbook.SheetNames.forEach(sheetName => {
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        const worksheet = workbook.Sheets[sheetName]
+        const jsonData = XLSX.utils.sheet_to_json(worksheet)
 
         jsonData.forEach(element => {
           if (element.Date) {
-            element.Date = convertExcelDate(element.Date);
+            element.Date = convertExcelDate(element.Date)
           }
 
           if (element.Memo) {
-            const serials = element.Memo.match(/S\/N\s*:\s*([A-Z0-9\s]+)/i);
-            element.Serials = serials && serials[1] ? serials[1].split(/\s+/).filter(Boolean) : [];
+            const serials = element.Memo.match(/S\/N\s*:\s*([A-Z0-9\s]+)/i)
+            element.Serials =
+              serials && serials[1]
+                ? serials[1].split(/\s+/).filter(Boolean)
+                : []
           }
 
           if (element.Item) {
-            const itemMatch = element.Item.match(/:(.*?)\s*\(/);
-            element.ItemCode = itemMatch && itemMatch[1] ? itemMatch[1] : (element.Item.match(/^(.*?)\s*\(/) || [])[1] || element.Item;
+            const itemMatch = element.Item.match(/:(.*?)\s*\(/)
+            element.ItemCode =
+              itemMatch && itemMatch[1]
+                ? itemMatch[1]
+                : (element.Item.match(/^(.*?)\s*\(/) || [])[1] || element.Item
           }
 
           if (element.Item) {
-            const brandMatch = element.Item.match(/^(.*?):/);
-            element.Brand = brandMatch ? brandMatch[1] : '';
+            const brandMatch = element.Item.match(/^(.*?):/)
+            element.Brand = brandMatch ? brandMatch[1] : ''
           }
-        });
+        })
 
-        let filteredData = jsonData.filter(x => x.Num && x.Num !== '');
+        let filteredData = jsonData.filter(x => x.Num && x.Num !== '')
+        console.log('filteredData', filteredData)
 
         invoiceData = filteredData.map(item => {
-          let rep;
-          if (item.Rep == 'AS') rep = 'Shaheer';
-          else if (item.Rep == 'AD') rep = 'amal';
-          else if (item.Rep == 'A') rep = 'Anjana';
-          else if (item.Rep == 'AR') rep = 'Arkam';
-          else if (item.Rep == 'AM') rep = 'amasha';
-          else if (item.Rep == 'H') rep = 'hiruni';
-          else if (item.Rep == 'SM') rep = 'shammi';
-          else{
-            rep = item.Rep;
-          }
+          let rep
+          let warrantyPeriod = item.Warranty
+
+          // Handle VAT: Convert to string and trim if necessary
+          let VAT = item[' VAT ']
+          console.log('VAT', VAT)
+
+          // Map rep codes to names
+          if (item.Rep == 'AS') rep = 'Shaheer'
+          else if (item.Rep == 'AD') rep = 'amal'
+          else if (item.Rep == 'A') rep = 'Anjana'
+          else if (item.Rep == 'AR') rep = 'Arkam'
+          else if (item.Rep == 'AM') rep = 'amasha'
+          else if (item.Rep == 'H') rep = 'hiruni'
+          else if (item.Rep == 'SM') rep = 'shammi'
+          else rep = item.Rep
 
           return {
-            inv: item.Num,
+            inv: item.Num || '',
             customer: item.Name || '',
             inv_date: item.Date || '',
             po_num: item['P. O. #'] || '',
             rep: rep || '',
             terms: item.Terms || '',
             shipping_date: item.Date || '',
-            vat: item.VAT || '',
+            vat: item.VATstatus || '', // Note: This is at the top level; seems fine
             discountValue: item.Discount || '',
             discountStatus: item.DiscountStatus || '',
             cusEmployee: item.CusEmployee || '',
@@ -1061,56 +1068,102 @@ document.getElementById('fileInput').addEventListener('change', function (e) {
             invoiceItems: {
               item_code: item.ItemCode || '',
               qt: item.Qty || '',
-              serials: item.Serials.toString() || '',
+              serials: item.Serials?.toString() || '',
               description: item.Memo || '',
               unit_price: item['Sales Price'] || '',
               total: item.Amount || '',
-              vat: item.VAT || '',
-              warranty: item.Warranty || '',
+              vat: VAT || '', // Use the processed VAT value here
+              warranty: WarrantyExpireDate(item.Date, warrantyPeriod) || '',
               gp: item.GP || ''
             }
-          };
-        });
+          }
+        })
+
+        // Function to calculate warranty expiration date
+        function WarrantyExpireDate (invoiceDate, period) {
+          // Step 1: Validate invoiceDate
+          if (!invoiceDate || typeof invoiceDate !== 'string') {
+            // console.error('Invalid or missing invoice date:', invoiceDate);
+            return null
+          }
+
+          // Step 2: Create a Date object and validate it
+          const date = new Date(invoiceDate)
+          if (isNaN(date.getTime())) {
+            // console.error('Invalid invoice date format:', invoiceDate);
+            return null
+          }
+
+          // Step 3: Validate warranty period
+          const parsedPeriod = parseInt(period, 10)
+          if (isNaN(parsedPeriod) || parsedPeriod < 0) {
+            // console.error('Invalid warranty period:', period);
+            return null
+          }
+
+          // Step 4: Calculate the expiration date
+          date.setFullYear(date.getFullYear() + parsedPeriod)
+          date.setDate(date.getDate() - 1)
+
+          // Step 5: Return the formatted date
+          return date.toISOString().split('T')[0]
+        }
 
         // **Capture start time**
-        const startTime = performance.now();
+        const startTime = performance.now()
+
+        // console.log('invoiceData', invoiceData)
 
         // **SEND DATA TO BACKEND USING FETCH**
-        fetch('../../functions/insertImportInvoice.php', {
+        fetch('../../functions/testinsert.php', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(invoiceData)
         })
-          .then(response => response.json())
+          .then(response => response.text())
           .then(data => {
             // **Capture end time**
-            const endTime = performance.now();
-            const uploadTime = Math.round(endTime - startTime); // Calculate actual upload time in ms
+            // console.log('data', data)
+            const endTime = performance.now()
+            const uploadTime = Math.round(endTime - startTime) // Calculate actual upload time in ms
 
             // Update UI dynamically based on upload time
-            document.getElementById('uploadText').textContent = 'Uploading...';
-            document.getElementById('uploadText').classList.add('text-danger', 'animate__animated', 'animate__flash');
+            document.getElementById('uploadText').textContent = 'Uploading...'
+            document
+              .getElementById('uploadText')
+              .classList.add(
+                'text-danger',
+                'animate__animated',
+                'animate__flash'
+              )
 
             setTimeout(() => {
-              document.getElementById('uploadText').textContent = 'Uploaded';
-              document.getElementById('uploadText').classList.replace('text-danger', 'text-success');
-            }, uploadTime);
+              document.getElementById('uploadText').textContent = 'Uploaded'
+              document
+                .getElementById('uploadText')
+                .classList.replace('text-danger', 'text-success')
+            }, uploadTime)
 
-            location.reload(); // Reload the page after successful upload
+            location.reload() // Reload the page after successful upload
           })
           .catch(error => {
-            console.error('Error:', error);
-          });
-      });
-    };
+            console.error('Error:', error)
+            alert(
+              `Error: ${error.message}\n\nDetails: ${JSON.stringify(
+                error,
+                null,
+                2
+              )}`
+            )
+          })
+      })
+    }
 
-    reader.readAsArrayBuffer(file);
+    reader.readAsArrayBuffer(file)
   }
-});
-
-
+})
 
 function convertExcelDate (excelDate) {
   if (!excelDate || isNaN(excelDate)) {

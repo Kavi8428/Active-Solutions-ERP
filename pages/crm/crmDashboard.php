@@ -10,6 +10,7 @@ if (!isset($_SESSION["user"])) {
 
 $user = $_SESSION["user"];
 $userLevel = $_SESSION["user_level"];
+// echo $userLevel;
 ?>
 
 
@@ -29,10 +30,7 @@ $userLevel = $_SESSION["user_level"];
     <link href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
-
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <!-- Include SweetAlert CSS and JS -->
@@ -46,20 +44,18 @@ $userLevel = $_SESSION["user_level"];
 </head>
 
 <body>
-
-
-    <div id="loadingScreen" class="loading-overlay">
-        <div class="loader"></div>
-
-        <div class="loading-text">Loading...</div>
-    </div>
-
     <script>
         const userSession = <?php echo json_encode($_SESSION['user']); ?>;
         const userLevel = <?php echo json_encode($_SESSION['user_level']); ?>;
         const userCategory = <?php echo json_encode($_SESSION['category']); ?>;
         // console.log('User userLevel:', userLevel);
     </script>
+
+    <div id="loadingScreen" class="loading-overlay">
+        <div class="loader"></div>
+
+        <div class="loading-text">Loading...</div>
+    </div>
 
     <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top px-3 shadow-sm">
         <div class="container-fluid">
@@ -457,7 +453,7 @@ $userLevel = $_SESSION["user_level"];
     </main>
 
     <div class="modal fade custom-modal" id="mainTableModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-fullscreen ">
             <div class="modal-content">
                 <div class="modal-header bg-info text-white">
                     <h5 class="modal-title">Deal Details <span id="currentItemCode"></span></h5>
@@ -466,42 +462,34 @@ $userLevel = $_SESSION["user_level"];
                 <div class="modal-body">
                     <form>
                         <div class="row">
-                            <div class="col-md-3 mb-3">
+                            <div class="col-md-2 mb-3">
                                 <label for="dealNo" class="form-label">Deal No.</label>
                                 <input type="text" class="form-control h-50" id="dealNo" name="dealNo" disabled>
                             </div>
-                            <div class="col-md-3 mb-3">
-                                <label for="dealDate" class="form-label">Date</label>
-                                <input type="date" class="form-control h-50" id="dealDate" name="dealDate">
-                            </div>
-                            <div class="col-md-3 mb-3">
+                            <div class="col-md-2 mb-3">
                                 <label for="dealSalesRep" class="form-label ">Sales Rep</label>
                                 <input type="text" id="dealSalesRep" class="form-control h-50" disabled>
                             </div>
-                            <div class="col-md-3 mb-3 border-3 ">
+                            <div class="col-md-2 mb-3">
+                                <label for="dealDate" class="form-label">Date</label>
+                                <input type="date" class="form-control h-50" id="dealDate" name="dealDate">
+                            </div>
+                            <div class="col-md-2 mb-3 border-3 ">
                                 <label for="dealStage" class="form-label">Stage</label>
                                 <select class="form-select " id="dealStage" name="dealStage">
-                                    <option selected value="initial">Initial</option>
-                                    <option value="continuous">Continuous</option>
+                                    <option selected value="p-initial">P-Initial</option>
+                                    <option value="r-initial">R-Initial</option>
+                                    <option value="p-continuous">P-Continuous</option>
+                                    <option value="r-continuous">R-Continuous</option>
                                     <option value="POC">POC</option>
                                     <option value="in-progress">In Progress</option>
-                                    <option value="completed">Completed</option>
+                                    <option value="p-completed">Completed</option>
+                                    <option value="r-completed">R-Completed</option>
                                     <option value="on-hold">On Hold</option>
                                     <option value="no-interest">No Interest</option>
                                 </select>
                             </div>
-                        </div>
-
-                        <div class="row">
-                            <tom class="col-md-12 mb-3">
-                                <label for="dealDescription" class="form-label">Description</label>
-                                <textarea class="form-control" id="dealDescription" name="dealDescription" rows="3"
-                                    placeholder="Enter something about this deal.
-Eg : American & Efird Lanka (Pvt)Ltd - Customer Sushaan gunasekara - Head of IT "></textarea>
-                            </tom>
-                        </div>
-                        <div class=" row">
-                            <div class="col-md-3 mb-3">
+                            <div class="col-md-2 mb-3">
                                 <label for="dealCustomer" class="form-label">Customer</label>
                                 <select class="form-select mt-1" id="dealCustomer" name="dealCustomer">
                                     <option selected disabled>Select Customer</option>
@@ -509,39 +497,74 @@ Eg : American & Efird Lanka (Pvt)Ltd - Customer Sushaan gunasekara - Head of IT 
                                     <!-- Add dynamic options here -->
                                 </select>
                             </div>
-                            <div class="col-md-3 mb-3">
+                            <div class="col-md-2 mb-3">
                                 <label for="cusTel" class="form-label">Contact No.</label>
                                 <input type="tel" class="form-control h-50 " id="cusTel" name="cusTel"
                                     placeholder="01123456789">
                             </div>
-                            <div class="col-md-3 mb-3">
-                                <label for="dealPartner" class="form-label">Partner</label>
-                                <select class="form-select mt-1" id="dealPartner" name="dealPartner">
-                                    <option selected disabled value="">Select Partner</option>
-                                    <!-- Add dynamic options here -->
-                                </select>
+                        </div>
+
+                        <div class="row mb-3 ">
+                            <div class="col-md-4">
+                                <label for="dealDescription" class="form-label">Description</label>
+                                <textarea class="form-control" id="dealDescription" name="dealDescription" rows="4"
+                                    placeholder="Enter something about this deal.
+Eg : American & Efird Lanka (Pvt)Ltd - Customer Sushaan gunasekara - Head of IT "></textarea>
                             </div>
-                            <div class="col-md-3 mb-3">
-                                <label for="dealPartRep" class="form-label">Part. Rep</label>
-                                <select class="form-select" id="dealPartRep" name="dealPartRep">
-                                    <option value="" selected disabled>
-                                        Enter Customer Employee
-                                    </option>
-                                    <!-- Add dynamic options here -->
-                                </select>
+                            <div class="col-md-8">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label for="dealPartner" class="form-label">Partner</label>
+                                        <select class="form-select mt-1" id="dealPartner" name="dealPartner">
+                                            <option selected disabled value="">Select Partner</option>
+                                            <!-- Add dynamic options here -->
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="dealPartRep" class="form-label">Part. Rep</label>
+                                        <select class="form-select" id="dealPartRep" name="dealPartRep">
+                                            <option value="" selected disabled>
+                                                Enter Customer Employee
+                                            </option>
+                                            <!-- Add dynamic options here -->
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="dealDp" class="form-label">GP:</label>
+                                        <input type="number" class="form-control mt-1" id="dealGp" name="dealGp" min="1">
+                                        </input>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="dealGpMonth" class="form-label ">GP Month:</label>
+                                        <input type="month" class="form-control mt-1" id="dealGpMonth">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                <div class="col-md-5">
+                                        <label for="dealItems" class="form-label">Items</label>
+                                        <select class="form-select mt-1" id="dealItems" name="dealItems">
+                                            <!-- Add dynamic options here -->
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label for="multyTender" class="form-label">Multy-Tender-ID:</label>
+                                        <input type="number" class="form-control mt-1" id="multyTender" name="multyTender" min="1">
+                                        </input>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label for="multyTender" class="form-label ">Multy-Tender Description:</label>
+                                        <textarea id="multyTenderDescription" class=" form-control form-text  h-25 " disabled></textarea>
+                                    </div>
+                                    
+                                </div>
                             </div>
                         </div>
-                        <div class=" row">
-                            <div class="col-md-3 mb-3">
-                                <label for="multyTender" class="form-label">Multy-Tender-ID:</label>
-                                <input type="number" class="form-control mt-1" id="multyTender" name="multyTender" min="1">
-                                </input>
-                            </div>
-                            <div class="col-md-9 mb-3">
-                                <label for="multyTender" class="form-label ">Multy-Tender Description:</label>
-                                <textarea id="multyTenderDescription" class=" form-control form-text  h-25 " disabled></textarea>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div id="fullDetailTable" style="max-height: 400px; overflow-y: auto;"></div>
                             </div>
                         </div>
+
                     </form>
                 </div>
                 <div class="modal-footer">
